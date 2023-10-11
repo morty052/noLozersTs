@@ -850,14 +850,12 @@ export function MatchEvents(socket, userNamespace) {
 
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
   socket.on("USE_POWER", (data, cb) => {
-    const { userName, character, roomID } = data;
-    const { name } = character;
-
-    socket.join(roomID);
-
-    switch (name) {
+    const { character, room_id } = data;
+    userNamespace.in(`${room_id}`).emit("POWER_USED", character);
+    switch (character) {
       case "Arhuanran":
-        io.in(roomID).emit("POWER_USED", name);
+        // userNamespace.in(`${room_id}`).emit("POWER_USED");
+        cb(character);
         break;
       default:
         break;

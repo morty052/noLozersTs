@@ -44,12 +44,12 @@ const ActionBar = ({
   // destructure display numbers and user powers from player class passed as props
   const {
     lives,
-    powerBars,
+    // powerBars,
     callPowers,
     ultimate,
     character,
-    ultimateBars,
-  }: player = CurrentPlayer && CurrentPlayer;
+  } // ultimateBars,
+  : player = CurrentPlayer && CurrentPlayer;
   const { name } = character && character;
 
   console.log(character);
@@ -64,30 +64,43 @@ const ActionBar = ({
   function actionBarReducer(state: IStateProps, action: IActionTypes) {
     const { PowerBars } = state;
 
-    // function handleUltimate() {
-    //   switch (name) {
-    //     case "Arhuanran":
-
-    //  return { ...state, PowerBars:PowerBars -1, UltimateBars:UltimateBars -1 };
-    //     case "Ife":
-    //     console.log(name)
-    //     console.log(action.payload)
-    //     if (!Lives) {
-    //       return {...state}
-    //     }
-    //  return { ...state, Lives:Lives +1, PowerBars:PowerBars -2, UltimateBars:UltimateBars -1 };
-    //     case "Washington":
-    //     if (!action.payload) {
-    //       return {...state}
-    //     }
-    //  return { ...state, PowerBars:action.payload.powerBars };
-    //     case "Da Vinci":
-    //     console.log('da vinci don use ultimate')
-    //  return { ...state, PowerBars:PowerBars -1, UltimateBars:UltimateBars -1  };
-    //   default:
-    //     return {...state}
-    // }
-    // }
+    function handleUltimate(): IStateProps {
+      switch (name) {
+        case "Arhuanran":
+          return {
+            ...state,
+            PowerBars: PowerBars - 1,
+            UltimateBars: UltimateBars - 1,
+          };
+        case "Ife":
+          console.log(name);
+          console.log(action.payload);
+          if (!lives) {
+            return { ...state };
+          }
+          return {
+            ...state,
+            Lives: lives + 1,
+            PowerBars: PowerBars - 2,
+            UltimateBars: UltimateBars - 1,
+          };
+        case "Washington":
+          if (!action.payload) {
+            return { ...state };
+          }
+          return { ...state, PowerBars: action.payload?.powerBars || 0 };
+        // return { ...state, PowerBars: action.payload.powerBars };
+        case "Da Vinci":
+          console.log("da vinci don use ultimate");
+          return {
+            ...state,
+            PowerBars: PowerBars - 1,
+            UltimateBars: UltimateBars - 1,
+          };
+        default:
+          return { ...state };
+      }
+    }
 
     switch (action.type) {
       case "OPEN_TRAY":
@@ -96,7 +109,8 @@ const ActionBar = ({
       case "CLOSE_TRAY":
         return { ...state, userTrayOpen: false };
       case "USE_ULTIMATE":
-        return { ...state };
+        return handleUltimate();
+
       // return  {...state}
       case "USE_POWER":
         return { ...state, PowerBars: PowerBars - 1 };

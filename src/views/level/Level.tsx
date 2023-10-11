@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/prop-types */
 
 import { useEffect, useReducer } from "react";
@@ -12,7 +13,6 @@ import { player } from "@/types";
 import { character } from "../gamemenu/components/CharacterSelect";
 
 const Level = () => {
-  // @ts-ignore
   const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
 
   const { socket } = useSocketcontext();
@@ -77,6 +77,11 @@ const Level = () => {
       console.log("Player Died");
       GameDispatch({ type: "PLAYER_DEATH", payload: { name: res } });
       console.log("reduced players");
+    });
+
+    socket?.on("POWER_USED", (res) => {
+      console.log(res);
+      CurrentPlayer.takeDamage();
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -228,8 +233,8 @@ const Level = () => {
   };
 
   // ?TESTING POWER
-  function callPower(i: string) {
-    socket?.emit("USE_POWER", { power: i, room_id }, (res: string) => {
+  function callPower(character: string) {
+    socket?.emit("USE_POWER", { character, room_id }, (res: string) => {
       console.log(res);
     });
   }
@@ -251,7 +256,7 @@ const Level = () => {
     <>
       {!ended ? (
         <div className="">
-          {lives > 0 ? (
+          {lives && lives > 0 ? (
             <>
               <p
                 onClick={() =>
