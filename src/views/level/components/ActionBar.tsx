@@ -1,12 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { player } from "@/types/player";
-import { useReducer } from "react";
+import { useReducer, useEffect } from "react";
 import { FaHeart, FaSearch, FaStar, FaUserFriends } from "react-icons/fa";
 import { Socket } from "socket.io-client";
+import { useSocketcontext } from "@/hooks/useSocketContext";
+import { character } from "@/views/gamemenu/components/CharacterSelect";
+import { Debuffs } from "@/classes/Player";
+import { message } from "antd";
 
 interface TactionBarProps {
   CurrentPlayer: player;
   OtherPlayers: player[];
   scoreBoard: player[];
+  room_id: string;
   PowerParams: {
     answer: string;
     nextQuestion: string;
@@ -22,17 +29,111 @@ interface IStateProps {
   Lives: number;
   PowerBars: number;
   UltimateBars: number;
+  CurrentPlayer?: any;
 }
 
 interface IActionTypes {
-  type: "OPEN_TRAY" | "CLOSE_TRAY" | "USE_POWER" | "USE_ULTIMATE";
-  payload?: IpayLoad;
+  type:
+    | "INIT"
+    | "OPEN_TRAY"
+    | "CLOSE_TRAY"
+    | "USE_POWER"
+    | "USE_ULTIMATE"
+    | "DEBUFF";
+  payload: IpayLoad;
 }
 
 interface IpayLoad {
   lives?: number;
   powerBars?: number;
   name?: string;
+  CurrentPlayer: {
+    lives: number;
+    powerBars: number;
+  };
+}
+
+const state: IStateProps = {
+  userTrayOpen: false,
+  Lives: 0,
+  PowerBars: 0,
+  UltimateBars: 0,
+  CurrentPlayer: "",
+};
+
+function actionBarReducer(state: IStateProps, action: IActionTypes) {
+  const { PowerBars, UltimateBars, Lives, CurrentPlayer } = state;
+  const { type, payload } = action;
+
+  const { lives } = CurrentPlayer;
+
+  function handleUltimate(): IStateProps {
+    switch (action.payload.name) {
+      case "Arhuanran":
+        return {
+          ...state,
+          PowerBars: PowerBars - 1,
+          UltimateBars: UltimateBars - 1,
+        };
+      case "Ife":
+        console.log(action.payload.name);
+        if (!Lives) {
+          return { ...state };
+        }
+        return {
+          ...state,
+          Lives: Lives + 1,
+          PowerBars: PowerBars - 2,
+          UltimateBars: UltimateBars - 1,
+        };
+      case "Washington":
+        if (!action.payload) {
+          return { ...state };
+        }
+        // @ts-ignore
+        return { ...state, PowerBars: action.payload.powerBars };
+      case "Da Vinci":
+        console.log("da vinci don use ultimate");
+        return {
+          ...state,
+          PowerBars: PowerBars - 1,
+          UltimateBars: UltimateBars - 1,
+        };
+      default:
+        return { ...state };
+    }
+  }
+
+  function handleInit(player: player) {
+    console.log(player);
+    const { lives, powerBars, ultimateBars } = player;
+    return {
+      ...state,
+      Lives: lives,
+      PowerBars: powerBars,
+      UltimateBars: ultimateBars,
+    };
+  }
+
+  switch (type) {
+    case "INIT":
+      return handleInit(payload.CurrentPlayer as player);
+    case "OPEN_TRAY":
+      return { ...state, userTrayOpen: true };
+    case "CLOSE_TRAY":
+      return { ...state, userTrayOpen: false };
+    case "USE_ULTIMATE":
+      return handleUltimate();
+    case "USE_POWER":
+      return { ...state };
+    case "DEBUFF":
+      console.log(action.payload);
+      // @ts-ignore
+      message.info(`${action.payload.sender}  ${action.payload.debuff} you `);
+      return { ...state, Lives: Lives - 1 };
+    default:
+      return { ...state };
+  }
 }
 
 const ActionBar = ({
@@ -40,6 +141,7 @@ const ActionBar = ({
   OtherPlayers,
   PowerParams,
   scoreBoard,
+  room_id,
 }: TactionBarProps) => {
   // destructure display numbers and user powers from player class passed as props
   const {
@@ -49,65 +151,41 @@ const ActionBar = ({
     ultimate,
     character,
     ultimateBars,
+    ultimates,
+    username,
   }: player = CurrentPlayer && CurrentPlayer;
   const { name } = character && character;
+  const { socket } = useSocketcontext();
 
-  console.log(character);
-
-  const state = {
-    userTrayOpen: false,
-    Lives: 0,
-    PowerBars: 0,
-    UltimateBars: 0,
-  };
-
-  function actionBarReducer(state: IStateProps, action: IActionTypes) {
-    const { PowerBars } = state;
-
-    // function handleUltimate() {
-    //   switch (name) {
-    //     case "Arhuanran":
-
-    //  return { ...state, PowerBars:PowerBars -1, UltimateBars:UltimateBars -1 };
-    //     case "Ife":
-    //     console.log(name)
-    //     console.log(action.payload)
-    //     if (!Lives) {
-    //       return {...state}
-    //     }
-    //  return { ...state, Lives:Lives +1, PowerBars:PowerBars -2, UltimateBars:UltimateBars -1 };
-    //     case "Washington":
-    //     if (!action.payload) {
-    //       return {...state}
-    //     }
-    //  return { ...state, PowerBars:action.payload.powerBars };
-    //     case "Da Vinci":
-    //     console.log('da vinci don use ultimate')
-    //  return { ...state, PowerBars:PowerBars -1, UltimateBars:UltimateBars -1  };
-    //   default:
-    //     return {...state}
-    // }
-    // }
-
-    switch (action.type) {
-      case "OPEN_TRAY":
-        return { ...state, userTrayOpen: true };
-
-      case "CLOSE_TRAY":
-        return { ...state, userTrayOpen: false };
-      case "USE_ULTIMATE":
-        return { ...state };
-      // return  {...state}
-      case "USE_POWER":
-        return { ...state, PowerBars: PowerBars - 1 };
-      default:
-        return { ...state };
-    }
+  function callUltimate() {
+    // CurrentPlayer.Debuff("crushed");
+    socket?.emit("USE_POWER", { name, room_id }, (res: string) => {
+      console.log(res);
+    });
   }
 
+  function callDebuff(target: string | undefined) {
+    const { character } = CurrentPlayer;
+    const { name } = character;
+    // @ts-ignore
+    const { debuff, target_name, sender } = CurrentPlayer.callDebuff({
+      target_name: `${target}`,
+      name: name,
+    });
+    console.log(sender);
+    socket?.emit(
+      "DEBUFF",
+      { debuff, target_name, room_id, sender },
+      (res: string) => {
+        console.log(res);
+      }
+    );
+  }
+
+  // @ts-ignore
   const [ActionState, ActionDispatch] = useReducer(actionBarReducer, state);
 
-  const { PowerBars, UltimateBars, userTrayOpen } = ActionState;
+  const { Lives, userTrayOpen } = ActionState;
 
   const handleTray = () => {
     if (userTrayOpen) {
@@ -133,12 +211,13 @@ const ActionBar = ({
   };
 
   const ActionTray = () => {
+    console.log(OtherPlayers);
     return (
       <div className="z-10 my-4 rounded-3xl border bg-white px-4 py-2 shadow-lg ">
         {scoreBoard.length < 1
           ? OtherPlayers?.map((player, index) => (
               <div
-                onClick={() => sendRequest(player.username)}
+                onClick={() => callDebuff(player.username)}
                 key={index}
                 className="flex gap-x-2"
               >
@@ -188,7 +267,7 @@ const ActionBar = ({
           <div className="flex items-center justify-around rounded-3xl border px-4 py-2.5">
             <div className="flex items-center gap-x-2">
               <FaHeart />
-              <p>{lives}</p>
+              <p>{Lives}</p>
             </div>
 
             {/* // eslint-disable-next-line react-hooks/rules-of-hooks */}
@@ -197,15 +276,15 @@ const ActionBar = ({
               className="flex items-center gap-x-2"
             >
               <FaSearch />
-              <p>{PowerBars}</p>
+              <p>{powerBars}</p>
             </div>
 
             <div
-              onClick={() => ultimate(Superparams)}
+              // onClick={() => ultimate(Superparams)}
               className="flex items-center gap-x-2"
             >
               <FaStar />
-              <span>{UltimateBars}</span>
+              <span>{ultimateBars}</span>
             </div>
 
             <div
@@ -220,6 +299,51 @@ const ActionBar = ({
       </div>
     );
   };
+
+  useEffect(() => {
+    ActionDispatch({
+      type: "INIT",
+      payload: {
+        CurrentPlayer,
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    socket?.on("POWER_USED", (res: character) => {
+      console.log(res);
+      CurrentPlayer.Debuff("crushed");
+      ActionDispatch({ type: "DEBUFF", payload: { name: res } });
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    socket?.on(
+      "DEBUFF_USED",
+      (res: {
+        debuff: Debuffs;
+        target_name: string;
+        room_id: string;
+        sender: string;
+      }) => {
+        const { debuff, target_name, sender } = res;
+        console.log(debuff);
+        console.log(username);
+
+        if (username == target_name) {
+          console.log("This you buddy", target_name);
+          // @ts-ignore
+          ActionDispatch({
+            type: "DEBUFF",
+            payload: {
+              debuff,
+              sender,
+            },
+          });
+        }
+      }
+    );
+  }, [socket]);
 
   return (
     <div className="">

@@ -1,19 +1,38 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { player } from "@/types";
 import { message } from "antd";
 
+export type Debuffs = "crushed" | "confused" | "snared" | "empowered" | "none";
+export type characterName =
+  | "Arhuanran"
+  | "Athena"
+  | "Da Vinci"
+  | "Ife"
+  | "Washington"
+  | "Confucious";
+
 class Player {
-  name;
+  username;
   points;
   lives;
-  partners;
   powerBars;
   ultimateBars;
   character;
   characterName;
-  enemies;
   characterAvatar;
   status;
   statuseffects;
   tryTest;
+  takeDamage;
+  increasePoints;
+  callPowers;
+  ultimate;
+  callDebuff;
+  Debuff;
+  teamUp;
+  partners?: player[];
+  enemies?: player[];
+  questions: string[] | undefined;
 
   constructor({
     character,
@@ -23,7 +42,9 @@ class Player {
     ultimates,
     status,
     statuseffects,
-  }) {
+    username,
+    questions,
+  }: player) {
     const { name: characterName } = character;
     this.characterAvatar = characterAvatar;
     this.characterName = characterName;
@@ -31,6 +52,25 @@ class Player {
     this.lives = lives;
     this.ultimateBars = ultimates;
     (this.status = status), (this.statuseffects = statuseffects);
+
+    this.questions = questions;
+    console.log(questions);
+
+    this.callDebuff = (props: {
+      target_name: string;
+      name: characterName;
+      sender: string;
+    }): { debuff: Debuffs; target_name: string; sender: string } => {
+      return this.SendDebuff(props);
+    };
+
+    this.Debuff = (props: {
+      debuff: Debuffs;
+      target_name: string;
+      sender: string;
+    }) => {
+      this.ApplyDebuff(props);
+    };
     this.tryTest = this.Test;
     // handle character stats modifications
     // if (characterName == "Ife") {
@@ -54,12 +94,10 @@ class Player {
     //   this.powerBars = 2;
     // }
 
-    this.name = name;
+    this.username = username;
     this.points = 0;
 
-    this.partners = [];
     this.character = character;
-    console.log("this is you", this);
 
     this.takeDamage = this.Damage;
 
@@ -69,18 +107,29 @@ class Player {
 
     this.ultimate = this.PowerUps;
 
-    this.teamUp = (partner) => {
-      console.log(partner);
+    this.teamUp = (partner: player) => {
       this.pushPartner(partner);
     };
   }
 
+  // Damage = () => {
+  //   if (this.lives <= 0) {
+  //     return console.log("This person died");
+  //   }
+
+  //   this.lives = this.lives - 1;
+
+  //   console.log("Damage taken");
+  // };
+
   Damage = () => {
-    if (this.lives <= 0) {
+    if (this.lives !== undefined && this.lives <= 0) {
       return console.log("This person died");
     }
 
-    this.lives = this.lives - 1;
+    if (this.lives !== undefined) {
+      this.lives = this.lives - 1;
+    }
 
     console.log("Damage taken");
   };
@@ -89,17 +138,16 @@ class Player {
     this.points = this.points + 10;
   };
 
-  pushPartner = (partner) => {
-    this.partners.push(partner);
+  pushPartner = (partner: player) => {
+    this.partners?.push(partner);
   };
 
   findEnemy = () => {
-    const enemy = this.enemies.find((enemy) => (enemy.name = "cvb"));
-    console.log(enemy);
+    const enemy = this.enemies?.find((enemy) => (enemy.username = "cvb"));
   };
 
   // * PLAYER CHARACTER ULTIMATE ACTIONS
-  PowerUps = (props) => {
+  PowerUps = (props: { func: (name: string) => void }) => {
     const { func } = props;
 
     // * destructure name from player characater passed in player contructor
@@ -115,18 +163,24 @@ class Player {
         func("Arhuanran");
         break;
       case "Ife":
-        if (this.powerBars == 0) {
-          return message.error("no more power bars");
+        if (this.ultimateBars == 0) {
+          return message.error("no more ultimates");
         }
-        this.lives = this.lives + 1;
+
+        if (this.lives) {
+          this.lives = this.lives + 1;
+        }
         this.powerBars = this.powerBars - 2;
+        this.ultimateBars = this.ultimateBars - 1;
         func("Ife");
         break;
       case "Da Vinci":
         if (this.powerBars == 0) {
           return message.error("no more power bars");
         }
-        this.lives = this.lives + 1;
+        if (this.lives) {
+          this.lives = this.lives + 1;
+        }
         this.powerBars = this.powerBars - 2;
         func("Da Vinci");
         break;
@@ -137,10 +191,15 @@ class Player {
   };
 
   // * PLAYER  CHARACTER ANSWER REVEAL FUNCTIONS
-  Powers = (props) => {
+  Powers = (props: {
+    answer: string;
+    func: () => void;
+    nextQuestion: string;
+    thirdQuestion: string;
+  }) => {
     const { answer, func, nextQuestion, thirdQuestion } = props;
     const { name } = this.character;
-    let powerBars = this.powerBars;
+    const powerBars = this.powerBars;
 
     const decreasePowerBars = () => {
       this.powerBars = powerBars - 1;
@@ -152,7 +211,6 @@ class Player {
 
     switch (name) {
       case "Athena":
-        console.log("Athena the wise");
         message.info(`${nextQuestion}`);
         decreasePowerBars();
         break;
@@ -189,8 +247,73 @@ class Player {
     func();
   };
 
+  ApplyDebuff = (props: {
+    debuff: Debuffs;
+    target_name: string;
+    sender: string;
+  }) => {
+    const { debuff, target_name } = props;
+    console.log(props);
+
+    if (target_name == this.username) {
+      console.log(`this player ${target_name} got ${debuff}`);
+      // this.lives = 0;
+      // console.log(this.lives);
+    } else {
+      return console.log("not you");
+    }
+    // switch (debuffs) {
+    //   case "confused":
+    //     this.powerBars = this.powerBars - 1;
+    //     break;
+    //   case "crushed":
+    //     this.lives = this.lives && this.lives - 1;
+    //     break;
+    //   case "empowered":
+    //     break;
+    //   case "none":
+    //     break;
+    //   case "snared":
+    //     break;
+
+    //   default:
+    //     break;
+    // }
+  };
+
+  SendDebuff = (props: {
+    target_name: string;
+    name: characterName;
+  }): { debuff: Debuffs; target_name: string; sender: string } => {
+    const { target_name, name } = props;
+    const sender = this.username;
+
+    const deterMineDebuff = () => {
+      let debuff: Debuffs;
+      switch (name) {
+        case "Ife":
+          debuff = "confused";
+          return debuff;
+        case "Arhuanran":
+          debuff = "crushed";
+          return debuff;
+        default:
+          break;
+      }
+    };
+
+    const debuff = deterMineDebuff();
+
+    return {
+      // @ts-ignore
+      debuff,
+      target_name,
+      sender,
+    };
+  };
+
   // ? SOCKET TEST ?
-  Test = (func) => {
+  Test = (func: (n: string) => void) => {
     const { name } = this.character;
     func(name);
   };

@@ -700,11 +700,6 @@ export function MatchEvents(socket, userNamespace) {
     }
   };
 
-  socket.on("TEST_POWER", (data, cb) => {
-    const { test } = data;
-    cb(test);
-  });
-
   socket.on("SET_ROOM", async (data, cb) => {
     const { room_id, username, category } = data;
 
@@ -742,7 +737,7 @@ export function MatchEvents(socket, userNamespace) {
         .filter((player) => player.controller.username == username)
         .map((player) => {
           const { traits } = player.controller.character;
-          const { peeks, lives } = traits;
+          const { peeks, lives, ultimates } = traits;
           return {
             character: player.controller.character,
             characterAvatar: urlFor(player.controller.character.avatar).url(),
@@ -750,9 +745,10 @@ export function MatchEvents(socket, userNamespace) {
             points: player.points,
             lives: lives,
             peeks: peeks,
-            ultimates: player.ultimates,
+            ultimates: ultimates,
             status: player.status,
             statuseffects: player.statuseffects,
+            questions,
           };
         });
 
@@ -761,7 +757,7 @@ export function MatchEvents(socket, userNamespace) {
         .filter((player) => player.controller.username != username)
         .map((player) => {
           const { traits } = player.controller.character;
-          const { peeks, lives } = traits;
+          const { peeks, lives, ultimates } = traits;
           return {
             character: player.controller.character,
             characterAvatar: urlFor(player.controller.character.avatar).url(),
@@ -769,9 +765,10 @@ export function MatchEvents(socket, userNamespace) {
             points: player.points,
             lives,
             peeks,
-            ultimates: player.ultimates,
+            ultimates: ultimates,
             status: player.status,
             statuseffects: player.statuseffects,
+            questions,
           };
         });
 
@@ -850,14 +847,14 @@ export function MatchEvents(socket, userNamespace) {
 
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
   socket.on("USE_POWER", (data, cb) => {
-    const { userName, character, roomID } = data;
-    const { name } = character;
+    const { name, room_id } = data;
 
-    socket.join(roomID);
+    cb(name);
+    userNamespace.in(room_id).emit("POWER_USED", name);
 
     switch (name) {
       case "Arhuanran":
-        io.in(roomID).emit("POWER_USED", name);
+        userNamespace.in(room_id).emit("POWER_USED", name);
         break;
       default:
         break;
@@ -868,6 +865,17 @@ export function MatchEvents(socket, userNamespace) {
     //   .players.filter((player) => {
     //     return player.username != userName;
     //   });
+  });
+
+  socket.on("DEBUFF", (data, cb) => {
+    const { debuff, target_name, room_id, sender } = data;
+    console.log(debuff);
+    cb(debuff);
+    userNamespace.in(room_id).emit("DEBUFF_USED", {
+      debuff,
+      target_name,
+      sender,
+    });
   });
 
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS

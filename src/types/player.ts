@@ -1,3 +1,4 @@
+import { Debuffs, characterName } from "@/classes/Player";
 import { character } from "@/views/gamemenu/components/CharacterSelect";
 import { Socket } from "socket.io-client";
 
@@ -13,6 +14,18 @@ export type player = {
   statuseffects: "";
   powerBars: number;
   peeks: number;
+  questions?: string[];
+  partners?: player[];
+  callDebuff: (props: {
+    target_name: string;
+    name: characterName;
+    sender: string;
+  }) => {
+    debuff: Debuffs;
+    target_name: string;
+    sender: string;
+  };
+  Debuff: (d: Debuffs) => void | undefined;
   callPowers: (params: {
     answer: string;
     nextQuestion: string;
@@ -20,7 +33,7 @@ export type player = {
     socket: Socket;
     roomID: string;
     func: (lives: number, powerBars: number) => void;
-  }) => void;
+  }) => void | undefined;
   ultimate: (params: {
     answer: string;
     nextQuestion: string;
@@ -28,10 +41,9 @@ export type player = {
     socket: Socket;
     roomID: string;
     func: (name: string) => void;
-  }) => void;
+  }) => void | undefined;
   character: character;
   ultimateBars: number;
-  partners: player[];
   teamUp: (player: player | undefined) => void;
   controller?: {
     username: string;

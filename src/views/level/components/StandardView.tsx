@@ -2,7 +2,7 @@ import { player } from "@/types";
 import { ActionBar, ChoiceList, Screen } from ".";
 import { Socket } from "socket.io-client";
 
-interface IViewProps {
+type IViewProps = {
   CurrentPlayer: player;
   OtherPlayers: player[];
   choices: string[];
@@ -10,6 +10,7 @@ interface IViewProps {
   handleAnswer: (a: string) => void;
   correct_answer: string;
   scoreBoard: [];
+  room_id: string | undefined;
   PowerParams: {
     answer: string;
     nextQuestion: string;
@@ -18,7 +19,7 @@ interface IViewProps {
     roomID: string;
     func: (lives: number, powerBars: number) => void;
   };
-}
+};
 
 const StandardView = ({
   CurrentPlayer,
@@ -29,6 +30,7 @@ const StandardView = ({
   correct_answer,
   scoreBoard,
   PowerParams,
+  room_id,
 }: IViewProps) => {
   return (
     <>
@@ -40,6 +42,7 @@ const StandardView = ({
           choices={choices}
         />
         <ActionBar
+          room_id={room_id}
           PowerParams={PowerParams}
           // correct_answer={correct_answer}
           CurrentPlayer={CurrentPlayer}

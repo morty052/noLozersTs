@@ -61,9 +61,16 @@ const Level = () => {
     CurrentPlayer.increasePoints();
   };
 
+  // const handleDebuff = (res) => {
+  //   CurrentPlayer.Debuff(res);
+  // };
+
   // * HANDLE PLAYER DEATH AND RESPONSE
   // * HANDLE EVENT FIRED AFTER USER PICKS AN ANSWER
   useEffect(() => {
+    if (!CurrentPlayer) {
+      return;
+    }
     socket?.on("RESPONSE_RECEIVED", (res) => {
       GameDispatch({
         type: "PROGRESS_LEVEL",
@@ -79,8 +86,43 @@ const Level = () => {
       console.log("reduced players");
     });
 
+    socket?.on("POWER_USED", (res: character) => {
+      console.log(res);
+      const { name } = res;
+
+      // switch (name) {
+      //   case "Arhuanran":
+      //     CurrentPlayer.Debuff("crushed");
+      //     break;
+      //   case "Athena":
+      //     CurrentPlayer.Debuff();
+      //     break;
+      //   case "Da Vinci":
+      //     CurrentPlayer.Debuff();
+      //     break;
+      //   case "Ife":
+      //     CurrentPlayer.Debuff("confused");
+      //     break;
+      //   case "Washington":
+      //     CurrentPlayer.Debuff();
+      //     break;
+      //   case "Confucious":
+      //     CurrentPlayer.Debuff();
+      //     break;
+
+      //   default:
+      //     break;
+      // }
+    });
+
+    socket?.on("DEBUFF_USED", (res) => {
+      // handleDebuff(res);
+      CurrentPlayer.Debuff(res);
+      console.log(res);
+    });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket]);
+  }, [socket, CurrentPlayer]);
 
   // * SET QUESTIONS AND PLAYER OBJECTS
   useEffect(() => {
@@ -96,16 +138,15 @@ const Level = () => {
         questions: string[];
       }) => {
         console.log(res);
-        const { CurrentPlayer, OtherPlayers } = res;
+        const { CurrentPlayer, OtherPlayers, questions } = res;
         const { player, enemies } = SetPlayers(CurrentPlayer, OtherPlayers);
 
-        // @ts-ignore
         GameDispatch({
           type: "START_GAME",
           payload: {
             CurrentPlayer: player,
             OtherPlayers: enemies,
-            questions: res.questions,
+            questions,
           },
         });
       }
@@ -117,6 +158,7 @@ const Level = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // * HANDLE PAGE REFRESH
   useEffect(() => {
     const handleRefresh = (e) => {
       e.preventDefault();
@@ -147,7 +189,6 @@ const Level = () => {
         const winner = res.find((p) => p.points == highest);
         console.log(winner);
 
-        // @ts-ignore
         GameDispatch({
           type: "END_GAME",
           payload: {
@@ -183,7 +224,7 @@ const Level = () => {
     }
   }, [socket, allPlayers]);
 
-  if (questions.length < 1) {
+  if (questions.length < 1 || !CurrentPlayer) {
     return <h3>....loading</h3>;
   }
 
@@ -229,7 +270,8 @@ const Level = () => {
 
   // ?TESTING POWER
   function callPower(i: string) {
-    socket?.emit("USE_POWER", { power: i, room_id }, (res: string) => {
+    CurrentPlayer.Debuff("crushed");
+    socket?.emit("USE_POWER", { name: i, room_id }, (res: string) => {
       console.log(res);
     });
   }
@@ -245,6 +287,7 @@ const Level = () => {
     thirdQuestion,
     socket,
     roomID: room_id,
+    func: (f) => console.log(f),
   };
 
   return (
@@ -253,13 +296,7 @@ const Level = () => {
         <div className="">
           {lives > 0 ? (
             <>
-              <p
-                onClick={() =>
-                  CurrentPlayer.tryTest((i: string) => callPower(i))
-                }
-              >
-                test
-              </p>
+              <p onClick={() => CurrentPlayer.Debuff()}>test</p>
               <StandardView
                 CurrentPlayer={CurrentPlayer}
                 OtherPlayers={OtherPlayers}
@@ -267,7 +304,10 @@ const Level = () => {
                 question={question}
                 correct_answer={correct_answer}
                 handleAnswer={handleAnswer}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 PowerParams={PowerParams}
+                room_id={room_id}
                 scoreBoard={scoreBoard}
               />
             </>
