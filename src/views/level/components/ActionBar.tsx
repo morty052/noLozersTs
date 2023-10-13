@@ -159,7 +159,7 @@ const ActionBar = ({
   // destructure display numbers and user powers from player class passed as props
   const {
     lives,
-    // powerBars,
+    powerBars,
     callPowers,
     ultimate,
     character,

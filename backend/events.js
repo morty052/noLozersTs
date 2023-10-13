@@ -642,7 +642,7 @@ export function LobbyEvents(socket, userNamespace) {
 // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 export function MatchEvents(socket, userNamespace) {
   // * function to increase user points and return user scores
-  const increaseUserPoints = async (room_id, username) => {
+  const increaseUserPoints = async (room_id, username, incorrect) => {
     const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
 
     try {
@@ -658,6 +658,15 @@ export function MatchEvents(socket, userNamespace) {
       }
       const { players, _id: roomID } = room;
 
+      // !ONLY ADD POINTS TO ROOM IF NOT INCORRECT
+      if (incorrect) {
+        return new Promise((resolve) => {
+          resolve(players);
+        });
+      }
+
+      // * ADD POINTS TO USER
+      // ! LIST OF PLAYERS TO SEND BACK
       const returnList = players.map((player) => {
         if (player.controller.username == username) {
           return {
@@ -669,6 +678,7 @@ export function MatchEvents(socket, userNamespace) {
         return player;
       });
 
+      // ! LIST TO ADD POINTS TO ROOM IN SERVER
       const updatedList = players.map((player) => {
         if (player.controller.username == username) {
           return {
@@ -815,7 +825,7 @@ export function MatchEvents(socket, userNamespace) {
           }
 
           // * function to increase both userpoints and return user list
-          const list = await increaseUserPoints(room_id, username);
+          const list = await increaseUserPoints(room_id, username, correct);
           socket.join(room_id);
           userNamespace.in(room_id).emit("RESPONSE_RECEIVED", list);
         } catch (error) {
@@ -824,9 +834,18 @@ export function MatchEvents(socket, userNamespace) {
         break;
       // * HANDLE INCORRECT ANSWE
       case !correct:
-        console.log("Incorrect answer");
-        socket.join(room_id);
-        userNamespace.in(room_id).emit("RESPONSE_RECEIVED");
+        try {
+          console.log("Incorrect answer");
+          if (!room_id || !username) {
+            throw console.log("no room id");
+          }
+          // * function to increase both userpoints and return user list
+          const list = await increaseUserPoints(room_id, username, correct);
+          socket.join(room_id);
+          userNamespace.in(room_id).emit("RESPONSE_RECEIVED", list);
+        } catch (error) {
+          console.log(error);
+        }
         break;
 
       default:

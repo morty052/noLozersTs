@@ -335,7 +335,7 @@ const Level = () => {
             </span>
           </div>
 
-          {scoreBoard.map((player, index: number) => {
+          {scoreBoard?.map((player, index: number) => {
             const { points, controller } = player;
             const { username } = controller;
 
