@@ -2,7 +2,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { player } from "@/types/player";
 import { useReducer, useEffect } from "react";
-import { FaHeart, FaSearch, FaStar, FaUserFriends } from "react-icons/fa";
+import {
+  FaCircle,
+  FaHeart,
+  FaSearch,
+  FaStar,
+  FaUser,
+  FaUserFriends,
+} from "react-icons/fa";
 import { Socket } from "socket.io-client";
 import { useSocketcontext } from "@/hooks/useSocketContext";
 import { character } from "@/views/gamemenu/components/CharacterSelect";
@@ -14,6 +21,9 @@ interface TactionBarProps {
   OtherPlayers: player[];
   scoreBoard: player[];
   room_id: string;
+  level: number;
+  confused: boolean;
+  setconfused: (c: boolean) => void;
   PowerParams: {
     answer: string;
     nextQuestion: string;
@@ -142,6 +152,9 @@ const ActionBar = ({
   PowerParams,
   scoreBoard,
   room_id,
+  level,
+  confused,
+  setconfused,
 }: TactionBarProps) => {
   // destructure display numbers and user powers from player class passed as props
   const {
@@ -211,7 +224,7 @@ const ActionBar = ({
   };
 
   const ActionTray = () => {
-    console.log(OtherPlayers);
+    console.log(scoreBoard);
     return (
       <div className="z-10 my-4 rounded-3xl border bg-white px-4 py-2 shadow-lg ">
         {scoreBoard.length < 1
@@ -224,15 +237,45 @@ const ActionBar = ({
                 <p>{player.username}</p> <span>{player.points}</span>
               </div>
             ))
-          : scoreBoard?.map((player, index) => (
-              <div
-                onClick={() => sendRequest(player.username)}
-                key={index}
-                className="flex gap-x-2"
-              >
-                <p>{player.username}</p> <span>{player.points}</span>
-              </div>
-            ))}
+          : scoreBoard?.map((player, index) => {
+              if (player.controller?.username == username) {
+                return (
+                  <div
+                    onClick={() => sendRequest(player.username)}
+                    key={index}
+                    className="flex gap-x-2"
+                  >
+                    <a className="flex items-center gap-x-1  ">
+                      <span className="text-xs">
+                        <FaUser />
+                      </span>
+                      <span className="text-xs">
+                        {player.controller?.username}
+                      </span>
+                    </a>{" "}
+                    <span className="text-xs">{player.points}</span>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  onClick={() => sendRequest(player.username)}
+                  key={index}
+                  className="flex gap-x-2"
+                >
+                  <a className="flex items-center gap-x-1  ">
+                    <a className="text-xs">
+                      <FaCircle />
+                    </a>
+                    <span className="text-xs">
+                      {player.controller?.username}
+                    </span>
+                  </a>{" "}
+                  <span className="text-xs">{player.points}</span>
+                </div>
+              );
+            })}
       </div>
     );
   };
@@ -241,11 +284,7 @@ const ActionBar = ({
     const { answer, nextQuestion, thirdQuestion, socket, roomID } = PowerParams;
 
     const params = {
-      answer,
-      nextQuestion,
-      thirdQuestion,
-      socket,
-      roomID,
+      level,
       func: () => ActionDispatch({ type: "USE_POWER" }),
     };
 
@@ -340,6 +379,8 @@ const ActionBar = ({
               sender,
             },
           });
+
+          setconfused(true);
         }
       }
     );

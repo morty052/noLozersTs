@@ -14,7 +14,11 @@ export type player = {
   statuseffects: "";
   powerBars: number;
   peeks: number;
-  questions?: string[];
+  questions: {
+    question: string;
+    correct_answer: string;
+    incorrect_answers: string[];
+  }[];
   partners?: player[];
   callDebuff: (props: {
     target_name: string;

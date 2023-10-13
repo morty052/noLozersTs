@@ -32,7 +32,11 @@ class Player {
   teamUp;
   partners?: player[];
   enemies?: player[];
-  questions: string[] | undefined;
+  questions: {
+    question: string;
+    correct_answer: string;
+    incorrect_answers: string[];
+  }[];
 
   constructor({
     character,
@@ -54,7 +58,6 @@ class Player {
     (this.status = status), (this.statuseffects = statuseffects);
 
     this.questions = questions;
-    console.log(questions);
 
     this.callDebuff = (props: {
       target_name: string;
@@ -71,28 +74,9 @@ class Player {
     }) => {
       this.ApplyDebuff(props);
     };
-    this.tryTest = this.Test;
-    // handle character stats modifications
-    // if (characterName == "Ife") {
-    //   this.powerBars = 6;
-    //   this.ultimateBars = 3;
-    // }
-    // if (characterName == "Athena") {
-    //   this.powerBars = 3;
-    //   this.ultimateBars = 4;
-    // }
-    // if (characterName == "Da Vinci") {
-    //   this.powerBars = 6;
-    //   this.ultimateBars = 2;
-    // }
-    // if (characterName == "Confucious") {
-    //   this.powerBars = 8;
-    // }
-
-    // if (characterName == "Arhuanran") {
-    //   this.lives = 5;
-    //   this.powerBars = 2;
-    // }
+    this.tryTest = (number: number) => {
+      this.Test(number);
+    };
 
     this.username = username;
     this.points = 0;
@@ -144,6 +128,7 @@ class Player {
 
   findEnemy = () => {
     const enemy = this.enemies?.find((enemy) => (enemy.username = "cvb"));
+    console.log(enemy);
   };
 
   // * PLAYER CHARACTER ULTIMATE ACTIONS
@@ -191,15 +176,18 @@ class Player {
   };
 
   // * PLAYER  CHARACTER ANSWER REVEAL FUNCTIONS
-  Powers = (props: {
-    answer: string;
-    func: () => void;
-    nextQuestion: string;
-    thirdQuestion: string;
-  }) => {
-    const { answer, func, nextQuestion, thirdQuestion } = props;
+  Powers = (props: { func: () => void; level: number }) => {
+    const { func, level } = props;
     const { name } = this.character;
     const powerBars = this.powerBars;
+    // let level = 0;
+
+    const { correct_answer } = this.questions && this.questions[level];
+
+    const nextQuestion = this.questions && this.questions[level + 1];
+    const thirdQuestion = this.questions && this.questions[level + 2];
+    const { correct_answer: nextAnswer } = nextQuestion;
+    const { correct_answer: thirdAnswer } = thirdQuestion;
 
     const decreasePowerBars = () => {
       this.powerBars = powerBars - 1;
@@ -211,39 +199,39 @@ class Player {
 
     switch (name) {
       case "Athena":
-        message.info(`${nextQuestion}`);
+        message.info(`${nextAnswer}`);
         decreasePowerBars();
         break;
       case "Washington":
         console.log("White Man");
-        message.info(`${answer}`);
+        message.info(`${correct_answer}`);
         decreasePowerBars();
         break;
       case "Ife":
         console.log("Black Queen");
-        message.info(`${answer.substring(0, 2)}`);
+        message.info(`${thirdAnswer}`);
         decreasePowerBars();
         break;
       case "Da Vinci":
         console.log("za Painter");
-        message.info(`${thirdQuestion}`);
+        message.info(`${thirdAnswer}`);
         decreasePowerBars();
         break;
       case "Confucious":
         console.log("za Painter");
-        message.info(`${nextQuestion.substring(0, 2)}`);
+        message.info(`${correct_answer.substring(0, 2)}`);
         decreasePowerBars();
         break;
       case "Arhuanran":
-        console.log(this.name);
-        message.info(`${answer}`);
+        message.info(`${correct_answer}`);
         decreasePowerBars();
         break;
 
       default:
         break;
     }
-    // * handle ui changes and any further effects
+
+    // * HANDLE UI CHANGES AND ANY FUTHER EFFECTS
     func();
   };
 
@@ -313,9 +301,9 @@ class Player {
   };
 
   // ? SOCKET TEST ?
-  Test = (func: (n: string) => void) => {
-    const { name } = this.character;
-    func(name);
+  Test = (message: number): number => {
+    console.log(message);
+    return message;
   };
 }
 

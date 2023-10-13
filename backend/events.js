@@ -700,8 +700,21 @@ export function MatchEvents(socket, userNamespace) {
     }
   };
 
+  function generateQuestionsIndex() {
+    const randomNumber = Math.floor(Math.random() * 30); // Generate a random number between 0 and 30
+    const number1 = randomNumber;
+    const number2 = randomNumber + 20;
+
+    return {
+      start: number1,
+      end: number2,
+    };
+  }
+
   socket.on("SET_ROOM", async (data, cb) => {
     const { room_id, username, category } = data;
+    const { start, end } = generateQuestionsIndex();
+    console.log(start, end);
 
     try {
       let categoryName = category.replace("_", " ");
@@ -711,7 +724,7 @@ export function MatchEvents(socket, userNamespace) {
 
       console.log(categoryName);
       const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{players[]{...,controller -> {..., character -> {...}}}}`;
-      const questionQuery = `*[_type == "questions" && category match "${categoryName}"]`;
+      const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
 
       const questions = await client.fetch(questionQuery);
 
@@ -752,7 +765,6 @@ export function MatchEvents(socket, userNamespace) {
           };
         });
 
-      console.log(CurrentPlayer);
       const OtherPlayers = players
         .filter((player) => player.controller.username != username)
         .map((player) => {
@@ -882,7 +894,7 @@ export function MatchEvents(socket, userNamespace) {
   socket.on("PLAYER_DEATH", (data) => {
     const { room_id, username } = data;
 
-    io.in(room_id).emit("PLAYER_DEATH", username);
+    userNamespace.in(room_id).emit("PLAYER_DEATH", username);
   });
 
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS

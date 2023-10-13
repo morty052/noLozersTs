@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { FaStar } from "react-icons/fa";
 import { useSocketcontext } from "../../hooks/useSocketContext";
 import { useParams } from "react-router-dom";
@@ -14,6 +14,7 @@ import { character } from "../gamemenu/components/CharacterSelect";
 const Level = () => {
   // @ts-ignore
   const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
+  const [confused, setconfused] = useState(false);
 
   const { socket } = useSocketcontext();
 
@@ -33,23 +34,29 @@ const Level = () => {
     winner,
   } = GameState;
 
+  // !ORIGINAL FUNCTION
+  // const { question, correct_answer, incorrect_answers } =
+  //   questions.length > 1 ? questions[level] : [];
+
+  // ?TESTING NEW OBJECT DESTRUCTURING
   const { question, correct_answer, incorrect_answers } =
-    questions.length > 1 ? questions[level] : [];
+    questions.length > 1 ? CurrentPlayer.questions[level] : [];
 
   // destructure and rename username and points variable from winner object from state.
   const { points: winningPoints, controller: winningController } = winner;
   const { username: winnerName } = winningController ? winningController : [];
 
   const { lives } = CurrentPlayer as player;
+  console.log(CurrentPlayer?.questions?.[0]);
 
-  // handle player damage and death
+  // * HANDLE PLAYER DAMAGE AND DEATH
   const decreaseLives = () => {
     const { lives } = CurrentPlayer;
 
     if (lives == 1) {
       console.log("player about to die");
       socket?.emit("PLAYER_DEATH", {
-        username: CurrentPlayer.name,
+        username: CurrentPlayer.username,
         room_id,
       });
     }
@@ -294,9 +301,9 @@ const Level = () => {
     <>
       {!ended ? (
         <div className="">
-          {lives > 0 ? (
+          {lives && lives > 0 ? (
             <>
-              <p onClick={() => CurrentPlayer.Debuff()}>test</p>
+              <p onClick={() => CurrentPlayer.tryTest(level)}>test</p>
               <StandardView
                 CurrentPlayer={CurrentPlayer}
                 OtherPlayers={OtherPlayers}
@@ -304,10 +311,13 @@ const Level = () => {
                 question={question}
                 correct_answer={correct_answer}
                 handleAnswer={handleAnswer}
+                confused={confused}
+                setconfused={setconfused}
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 PowerParams={PowerParams}
-                room_id={room_id}
+                room_id={room_id as string}
+                level={level}
                 scoreBoard={scoreBoard}
               />
             </>

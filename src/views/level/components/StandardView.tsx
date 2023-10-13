@@ -10,7 +10,10 @@ type IViewProps = {
   handleAnswer: (a: string) => void;
   correct_answer: string;
   scoreBoard: [];
-  room_id: string | undefined;
+  room_id: string;
+  level: number;
+  setconfused: (c: boolean) => void;
+  confused: boolean;
   PowerParams: {
     answer: string;
     nextQuestion: string;
@@ -31,17 +34,26 @@ const StandardView = ({
   scoreBoard,
   PowerParams,
   room_id,
+  level,
+  confused,
+  setconfused,
 }: IViewProps) => {
+  // TODO: REMOVE USELESS PARAMETERS
   return (
     <>
       <div className="relative mx-auto h-screen max-w-2xl  bg-gray-300 sm:min-h-[700px]">
         <Screen question={question} CurrentPlayer={CurrentPlayer} />
         <ChoiceList
+          confused={confused}
+          setconfused={setconfused}
           correct_answer={correct_answer}
           handleAnswer={handleAnswer}
           choices={choices}
         />
         <ActionBar
+          confused={confused}
+          setconfused={setconfused}
+          level={level}
           room_id={room_id}
           PowerParams={PowerParams}
           // correct_answer={correct_answer}
