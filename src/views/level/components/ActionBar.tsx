@@ -238,41 +238,51 @@ const ActionBar = ({
               </div>
             ))
           : scoreBoard?.map((player, index) => {
+              // * PLAYER INDICATOR
               if (player.controller?.username == username) {
                 return (
                   <div
                     onClick={() => sendRequest(player.username)}
                     key={index}
-                    className="flex gap-x-2"
+                    className="flex gap-x-2 border-b pb-2 "
                   >
+                    {/* INNER CONTAINER */}
+                    <div className="flex gap-x-2">
+                      <a className="flex items-center gap-x-1  ">
+                        <a className="text-xs">
+                          <FaUser />
+                        </a>
+                        <span className="text-xs">
+                          {player.controller?.username}
+                        </span>
+                      </a>{" "}
+                      <span className="text-xs">{player.points}</span>
+                    </div>
+                    {/* INNER CONTAINER END */}
+                  </div>
+                );
+              }
+
+              // * OTHER PLAYER
+              return (
+                <div
+                  onClick={() => sendRequest(player.username)}
+                  key={index}
+                  className="flex gap-x-2 pt-2"
+                >
+                  {/* INNER CONTAINER */}
+                  <div className="flex gap-x-2">
                     <a className="flex items-center gap-x-1  ">
-                      <span className="text-xs">
-                        <FaUser />
-                      </span>
+                      <a className="text-xs">
+                        <FaCircle />
+                      </a>
                       <span className="text-xs">
                         {player.controller?.username}
                       </span>
                     </a>{" "}
                     <span className="text-xs">{player.points}</span>
                   </div>
-                );
-              }
-
-              return (
-                <div
-                  onClick={() => sendRequest(player.username)}
-                  key={index}
-                  className="flex gap-x-2"
-                >
-                  <a className="flex items-center gap-x-1  ">
-                    <a className="text-xs">
-                      <FaCircle />
-                    </a>
-                    <span className="text-xs">
-                      {player.controller?.username}
-                    </span>
-                  </a>{" "}
-                  <span className="text-xs">{player.points}</span>
+                  {/* INNER CONTAINER END */}
                 </div>
               );
             })}

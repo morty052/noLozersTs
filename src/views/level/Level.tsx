@@ -47,7 +47,6 @@ const Level = () => {
   const { username: winnerName } = winningController ? winningController : [];
 
   const { lives } = CurrentPlayer as player;
-  console.log(CurrentPlayer?.questions?.[0]);
 
   // * HANDLE PLAYER DAMAGE AND DEATH
   const decreaseLives = () => {
@@ -302,7 +301,7 @@ const Level = () => {
         <div className="">
           {lives && lives > 0 ? (
             <>
-              <p onClick={() => CurrentPlayer.tryTest(level)}>test</p>
+              {/* <p onClick={() => CurrentPlayer.tryTest(level)}>test</p> */}
               <StandardView
                 CurrentPlayer={CurrentPlayer}
                 OtherPlayers={OtherPlayers}

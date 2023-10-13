@@ -3,10 +3,11 @@ import { useSocketcontext } from "@/hooks/useSocketContext";
 import { TopicScreen } from ".";
 import { All_Categories } from "@/constants";
 import { player } from "@/types/player";
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger,  } from "@/components";
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components";
 import { Lobby } from "@/views";
 import { message } from "antd";
 import { Routes, Route, useParams } from "react-router-dom";
+import { useUserContext } from "@/contexts/userContext";
 
 const defaultRoomState = {
   roomCreated: false,
@@ -22,7 +23,7 @@ type Tactions =
   | "FETCH_PLAYERS"
   | "CREATE_ROOM"
   | "ADD_GUEST"
-  | "SEND_INVITE"
+  | "SEND_INVITE";
 
 type TroomActions = {
   type: Tactions;
@@ -37,13 +38,19 @@ type TdefaultState = {
   invitedPlayers: player[] | [];
 };
 
-
-
 function createRoomReducer(state: TdefaultState, action: TroomActions) {
   const { type, payload } = action;
-  const { friends, category, players, guest, room_id, addGuest, inviteFunction, guestSocket, hostName } = payload ? payload : [];
-
-  
+  const {
+    friends,
+    category,
+    players,
+    guest,
+    room_id,
+    addGuest,
+    inviteFunction,
+    guestSocket,
+    hostName,
+  } = payload ? payload : [];
 
   switch (type) {
     case "FETCH_FRIENDS":
@@ -53,22 +60,22 @@ function createRoomReducer(state: TdefaultState, action: TroomActions) {
       return { ...state, players: players };
 
     case "SET_CATEGORY":
-      localStorage.setItem("category", category)
+      localStorage.setItem("category", category);
       return { ...state, category: category };
-    
-      case"SEND_INVITE":
-      console.log(room_id)
 
-      inviteFunction(guestSocket, hostName, room_id)
-      return {...state}
+    case "SEND_INVITE":
+      console.log(room_id);
+
+      inviteFunction(guestSocket, hostName, room_id);
+      return { ...state };
 
     case "ADD_GUEST":
       state.invitedPlayers = [...state.invitedPlayers, guest];
-      console.log(guest._id)
+      console.log(guest._id);
       // * GET ROOM_ID as HOST_ID FROM PAYLOAD
-      // * GET DESTRUCTURED GUEST USERNAME FROM PAYLOAD 
-      // ! SEND GUEST USERNAME TO BE DISPLAYED AS POPUP ON HOST SIDE 
-      addGuest(guest._id, payload.host_id, guest.username)
+      // * GET DESTRUCTURED GUEST USERNAME FROM PAYLOAD
+      // ! SEND GUEST USERNAME TO BE DISPLAYED AS POPUP ON HOST SIDE
+      addGuest(guest._id, payload.host_id, guest.username);
       return { ...state };
 
     case "CREATE_ROOM":
@@ -80,40 +87,49 @@ function createRoomReducer(state: TdefaultState, action: TroomActions) {
   }
 }
 
-export function Room({invitedPlayers, category, hostname, friends, invitePlayer, room_id, setCategory }) {
-  
-
+export function Room({
+  invitedPlayers,
+  category,
+  hostname,
+  friends,
+  invitePlayer,
+  room_id,
+  setCategory,
+}) {
   // TODO:change username location
-  const username = localStorage.getItem("username")
-  
-  console.log("this is room", room_id)
+  const { username } = useUserContext();
 
-  return(
-     <>
-     <Tabs defaultValue="ONLINE_FRIENDS" className="">
-      <TabsList>
-        <TabsTrigger value="ONLINE_FRIENDS">Friends</TabsTrigger>
-        <TabsTrigger value="SEARCH_FRIENDS">Search</TabsTrigger>
-        <TabsTrigger value="LOBBY">Lobby</TabsTrigger>
-      </TabsList>
+  console.log("this is room", room_id);
 
-      <TabsContent value="ONLINE_FRIENDS">
-        <div className="mt-10">
-          <p>Online Friends:</p>
-          <div className="">
-            {friends?.map((player: player, index: number) => (
-              // * GET TARGET PLAYER ID 
-              // ? AND USERNAME
-              <p onClick={() => invitePlayer(player._id, username, room_id)} key={index}>
-                {player.username}
-              </p>
-            ))}
+  return (
+    <>
+      <Tabs defaultValue="ONLINE_FRIENDS" className="">
+        <TabsList>
+          <TabsTrigger value="ONLINE_FRIENDS">Friends</TabsTrigger>
+          <TabsTrigger value="SEARCH_FRIENDS">Search</TabsTrigger>
+          <TabsTrigger value="LOBBY">Lobby</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="ONLINE_FRIENDS">
+          <div className="mt-10">
+            <p>Online Friends:</p>
+            <div className="">
+              {friends?.map((player: player, index: number) => (
+                // * GET TARGET PLAYER ID
+                // ? AND USERNAME
+                <p
+                  onClick={() => invitePlayer(player._id, username, room_id)}
+                  key={index}
+                >
+                  {player.username}
+                </p>
+              ))}
+            </div>
           </div>
-        </div>
-      </TabsContent>
+        </TabsContent>
 
-      <TabsContent value="SEARCH_FRIENDS">
-        {/* <div className="">
+        <TabsContent value="SEARCH_FRIENDS">
+          {/* <div className="">
       <form action="">
         <div className="flex flex-col gap-y-4">
           <div className="relative">
@@ -169,15 +185,18 @@ export function Room({invitedPlayers, category, hostname, friends, invitePlayer,
 
       
     </div> */}
-      </TabsContent>
+        </TabsContent>
 
-      <TabsContent value="LOBBY">
-        <Lobby hostname={hostname} category={category} invitedPlayers={invitedPlayers} />
-      </TabsContent>
-
-    </Tabs>
+        <TabsContent value="LOBBY">
+          <Lobby
+            hostname={hostname}
+            category={category}
+            invitedPlayers={invitedPlayers}
+          />
+        </TabsContent>
+      </Tabs>
     </>
-  )
+  );
 }
 
 function CreateRoom() {
@@ -189,9 +208,9 @@ function CreateRoom() {
     defaultRoomState
   );
 
-  const {roomCreated, category, friends, players, invitedPlayers } = RoomState;
-  const {room_id} = useParams()
-  console.log("this is room",  room_id)
+  const { roomCreated, category, friends, players, invitedPlayers } = RoomState;
+  const { room_id } = useParams();
+  console.log("this is room", room_id);
 
   // * FILTER PLAYERS USING SEARCH QUERY
   const results =
@@ -205,35 +224,34 @@ function CreateRoom() {
   const username = localStorage.getItem("username");
 
   // * CREATE ROOM FUNCTION
-  function handleCreation(category:string) {
+  function handleCreation(category: string) {
     // * SEND EVENT TO SERVER TO CREATE ROOM FROM CLIENT SIDE
-    socket?.emit("CREATE_ROOM", { username, category }, (res) =>
-  {
-    // *DISPATCH CREATE ROOM EVENT / SAVE ROOM ID TO EVENT STATE
-      CreateRoomDispatch({ type: "CREATE_ROOM" , payload:{room_id:res}})
-      window.location.assign(`/menu/createroom/${res}`)
-}
-    );
+    socket?.emit("CREATE_ROOM", { username, category }, (res) => {
+      // *DISPATCH CREATE ROOM EVENT / SAVE ROOM ID TO EVENT STATE
+      CreateRoomDispatch({ type: "CREATE_ROOM", payload: { room_id: res } });
+      window.location.assign(`/menu/createroom/${res}`);
+    });
   }
 
   // *SET CATEGORY FUNCTION
-  function setCategory(category:string) {
-    CreateRoomDispatch({type: "SET_CATEGORY", payload: { category },})
+  function setCategory(category: string) {
+    CreateRoomDispatch({ type: "SET_CATEGORY", payload: { category } });
     // * CALL CREATE ROOM FUNCTION AFTER HANDLING CATEGORY
-    handleCreation(category)
+    handleCreation(category);
   }
 
-  
-// * ADD GUEST TO BACKEND ROOM FUNCTION
-// ! FUNCTION IS CALLED FROM INSIDE REDUCER
-function addGuest(guest:player, id:string | boolean, guestName:string) {
-    
-  socket?.emit("ADD_GUEST", {guestRef:guest, room_id:id, guestName},(username:string) => {
-    console.log(guest)
-    message.info(`${username} joined your room`)
-
-  })
-}
+  // * ADD GUEST TO BACKEND ROOM FUNCTION
+  // ! FUNCTION IS CALLED FROM INSIDE REDUCER
+  function addGuest(guest: player, id: string | boolean, guestName: string) {
+    socket?.emit(
+      "ADD_GUEST",
+      { guestRef: guest, room_id: id, guestName },
+      (username: string) => {
+        console.log(guest);
+        message.info(`${username} joined your room`);
+      }
+    );
+  }
 
   // *FETCH FRIENDS AND PLAYERS
   useEffect(() => {
@@ -282,16 +300,13 @@ function addGuest(guest:player, id:string | boolean, guestName:string) {
     fetchPlayers();
   }, [username]);
 
-  
   // *SOCKET LISTENERS
   useEffect(() => {
-
-    // * EVENT FIRED ON SERVER SIDE TO HANDLE ALL INCOMING PLAYERS 
+    // * EVENT FIRED ON SERVER SIDE TO HANDLE ALL INCOMING PLAYERS
     // * FUCTION TO HANDLE INVITATION ACCEPTED ON HOST SIDE
     socket?.on("INVITATION_ACCEPTED", (data) => {
-
-      const {guestRef, host_id} = data
-      console.log(guestRef,host_id)
+      const { guestRef, host_id } = data;
+      console.log(guestRef, host_id);
       /* 
       * SAVE INCOMING PLAYER TO APP STATE AS "guestRef"
       * GET host_id FROM EVENT 
@@ -302,58 +317,60 @@ function addGuest(guest:player, id:string | boolean, guestName:string) {
       */
 
       // * FIRE ADD_GUEST DISPATCH WHEN THIS EVENT IS CALLED ON SERVER SIDE
-      CreateRoomDispatch({ type: "ADD_GUEST", payload: { guest:guestRef, addGuest:addGuest, host_id } });
-
+      CreateRoomDispatch({
+        type: "ADD_GUEST",
+        payload: { guest: guestRef, addGuest: addGuest, host_id },
+      });
     });
-
-   
   }, [socket]);
 
-  
-
-  
-// * INVITE PLAYER FUNCTION
-  function invitePlayer(_id: string | undefined, hostName:string | null , room_id?:string ) {
+  // * INVITE PLAYER FUNCTION
+  function invitePlayer(
+    _id: string | undefined,
+    hostName: string | null,
+    room_id?: string
+  ) {
     /* 
       TODO:CHANGE USERNAME LOCATION FROM LOCAL STORAGE
       TODO:ADD ROOM_ID TO INVITATION REQUEST
       * THE USERNAME IS THE USERNAME OF THE SENDER
       * THE SOCKET ID BELONGS TO TARGET USER
       */
-     
-      // !original function
+
+    // !original function
     // socket?.emit("SEND_INVITATION", { socket_id, username:hostName, room_id });
 
-    socket?.emit("SEND_INVITATION", { _id, username:hostName, room_id });
+    socket?.emit("SEND_INVITATION", { _id, username: hostName, room_id });
   }
 
   return (
     <div className="p-4">
       <Routes>
-         {/* <Route path="/" element={<TopicScreen
+        {/* <Route path="/" element={<TopicScreen
         categories={All_Categories}
         setcategory={(category: string) => setCategory(category)} />} /> */}
-        <Route path="/" element={
-        <Room
-        setCategory={setCategory} 
-        room_id={room_id}
-        hostname={username}
-        invitedPlayers={invitedPlayers}
-        category={category}
-        invitePlayer={invitePlayer}
-        friends={friends}
-         />
-        }
-          />
+        <Route
+          path="/"
+          element={
+            <Room
+              setCategory={setCategory}
+              room_id={room_id}
+              hostname={username}
+              invitedPlayers={invitedPlayers}
+              category={category}
+              invitePlayer={invitePlayer}
+              friends={friends}
+            />
+          }
+        />
       </Routes>
-      
+
       {/* {!category && (
         <TopicScreen
           categories={All_Categories}
           setcategory={(category: string) => setCategory(category) }
         />
       )} */}
-
     </div>
   );
 }

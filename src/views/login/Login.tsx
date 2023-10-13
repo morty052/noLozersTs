@@ -1,42 +1,46 @@
 import { useState } from "react";
 import { Button } from "@/components";
-
+import { useUserContext } from "@/contexts/userContext";
 
 function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
 
-const [email, setEmail] = useState('')
-const [password, setPassword] = useState("")
-const [username, setUsername] = useState("")
+  const { signin } = useUserContext();
 
-async function handleLogin(e) {
-    e.preventDefault()
+  async function handleLogin(e) {
+    e.preventDefault();
     const options = {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: `{"email":"${email}","password":"${password}", "username":"${username}"}`
-      };
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: `{"email":"${email}","password":"${password}", "username":"${username}"}`,
+    };
 
-if (!email || !password) {
-    return
-}
+    try {
+      if (!email || !password) {
+        throw "Please enter email and password";
+      }
 
-try {
-    
-      fetch('http://localhost:3000/login', options)
-        .then(response => response.json())
-        .then(response => {
-        console.log(response)
-        localStorage.setItem("username", username)
-        window.location.assign(`/menu`)
-        })
-        
-} catch (error) {
-    console.log(error)
-}
+      await signin(email, password).then(() => window.location.assign(`/menu`));
+    } catch (error) {
+      console.log(error);
+    }
 
+    // try {
 
+    //       fetch('http://localhost:3000/login', options)
+    //         .then(response => response.json())
+    //         .then(response => {
+    //         console.log(response)
+    //         localStorage.setItem("username", username)
+    //         window.location.assign(`/menu`)
+    //         })
 
-}
+    // } catch (error) {
+    //     console.log(error)
+    // }
+  }
 
   return (
     <main className="min-h-screen max-w-7xl bg-gray-200 p-4">
@@ -46,9 +50,9 @@ try {
           <div className="flex flex-col">
             <label htmlFor="email">Enter your email</label>
             <input
-            id="email"
+              id="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="rounded-lg border-b p-2"
               placeholder="email"
               type="text"
@@ -72,9 +76,9 @@ try {
           <div className="flex flex-col">
             <label htmlFor="password">Enter your password</label>
             <input
-            id="password"
-             value={password}
-             onChange={e => setPassword(e.target.value)}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="rounded-lg border-b p-2"
               placeholder="password"
               type="text"
@@ -83,7 +87,7 @@ try {
 
           {/* SUBMIT BUTTON */}
           <Button type="submit" onClick={(e) => handleLogin(e)} className="">
-             Log in
+            Log in
           </Button>
         </form>
       </section>

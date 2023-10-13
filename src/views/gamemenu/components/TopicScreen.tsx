@@ -2,21 +2,20 @@ import { FaStar } from "react-icons/fa";
 import { useSocketcontext } from "@/hooks/useSocketContext";
 import { All_Categories } from "@/constants";
 import { useState } from "react";
-
+import { useUserContext } from "@/contexts/userContext";
 
 function TopicScreen() {
-
-  const [category, setCategory] = useState("")
+  const [category, setCategory] = useState("");
 
   // TODO GET USERNAME FROM SOMEWHERE ELSE
-  const username = localStorage.getItem("username");
+  const { username } = useUserContext();
 
   const { socket } = useSocketcontext();
 
   // * CREATE ROOM FUNCTION
-  function handleCreation(id:string) {
-  localStorage.setItem("category", id)
-  const category = localStorage.getItem("category")
+  function handleCreation(id: string) {
+    localStorage.setItem("category", id);
+    const category = localStorage.getItem("category");
     // sset category
     // * SEND EVENT TO SERVER TO CREATE ROOM FROM CLIENT SIDE
     socket?.emit("CREATE_ROOM", { username, category }, (res) => {

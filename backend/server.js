@@ -1,9 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { Server } from "socket.io";
-import { createServer } from "http";
 import client, { urlFor } from "./client.js";
-import AllEvents, { LobbyEvents, MatchEvents } from "./events.js";
+import { LobbyEvents, MatchEvents } from "./events.js";
 import supabase from "./supabase.js";
 
 const app = express();
@@ -16,15 +15,15 @@ export const io = new Server("5000", {
   },
 });
 
-const allQuestions = {
-  General_knowledge: "",
-  Movie_trivia: "",
-  Mythology_trivia: "",
-  Music_trivia: "",
-  VideoGame_trivia: "",
-  Science_Nature_trivia: "",
-  Animal_trivia: "",
-};
+// const allQuestions = {
+//   General_knowledge: "",
+//   Movie_trivia: "",
+//   Mythology_trivia: "",
+//   Music_trivia: "",
+//   VideoGame_trivia: "",
+//   Science_Nature_trivia: "",
+//   Animal_trivia: "",
+// };
 
 // async function getQuestions() {
 //   const { shuffle } = lodash;
@@ -111,232 +110,233 @@ const allQuestions = {
 
 // getQuestions();
 
-const users = [];
-const rooms = [
-  {
-    id: "one",
-    players: [],
-  },
-  {
-    id: 2,
-    players: [],
-  },
-  {
-    id: 3,
-    players: [],
-  },
-];
+// const users = [];
+// const rooms = [
+//   {
+//     id: "one",
+//     players: [],
+//   },
+//   {
+//     id: 2,
+//     players: [],
+//   },
+//   {
+//     id: 3,
+//     players: [],
+//   },
+// ];
 
-const questions = [
-  {
-    question: "Question 1",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 2",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 3",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 4",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 5",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 6",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 7",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 8",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 9",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-  {
-    question: "Question 10",
-    choices: [
-      {
-        title: "Answer 1",
-        id: 1,
-      },
-      {
-        title: "Answer 2",
-        id: 2,
-      },
-      {
-        title: "Answer 3",
-        id: 3,
-      },
-    ],
-    answer: "Answer 3",
-  },
-];
+// const questions = [
+//   {
+//     question: "Question 1",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 2",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 3",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 4",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 5",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 6",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 7",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 8",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 9",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+//   {
+//     question: "Question 10",
+//     choices: [
+//       {
+//         title: "Answer 1",
+//         id: 1,
+//       },
+//       {
+//         title: "Answer 2",
+//         id: 2,
+//       },
+//       {
+//         title: "Answer 3",
+//         id: 3,
+//       },
+//     ],
+//     answer: "Answer 3",
+//   },
+// ];
 
 // function to add user to rooms array and also return joined room
-const addUser = (username, socketID, character) => {
-  let points = 0;
+// const addUser = (username, socketID, character) => {
+//   let points = 0;
 
-  if (users.some((user) => username == user.username)) {
-    return;
-  }
+//   if (users.some((user) => username == user.username)) {
+//     return;
+//   }
 
-  users.push({ username, socketID, points, character });
+//   users.push({ username, socketID, points, character });
 
-  const empty_room = rooms.filter((room) => room.players.length < 3)[0];
+//   const empty_room = rooms.filter((room) => room.players.length < 3)[0];
 
-  empty_room.players.push({ username, socketID, points, character });
+//   empty_room.players.push({ username, socketID, points, character });
 
-  return empty_room;
-};
+//   return empty_room;
+// };
 
-const getUser = (username) => {
-  const user = users.find((user) => user.username == username);
-  return user;
-};
+// const getUser = (username) => {
+//   const user = users.find((user) => user.username == username);
+//   return user;
+// };
 
 const userNamespace = io.of("/user");
 
 userNamespace.on("connect", (socket) => {
   socket.on("handshake", async (data) => {
     const { username } = data;
+    console.log(username);
     const query = `*[_type == "users" && username == "${username}"]`;
     try {
       const user = await client
@@ -377,38 +377,46 @@ userNamespace.on("connect", (socket) => {
   LobbyEvents(socket, userNamespace);
 });
 
-io.on("connect", (socket) => {
-  // ...
+// io.on("connect", (socket) => {
+//   // ...
 
-  AllEvents(socket);
-  LobbyEvents(socket);
-  MatchEvents(socket);
-});
+//   AllEvents(socket);
+//   LobbyEvents(socket);
+//   MatchEvents(socket);
+// });
 
-app.get("/", async (req, res) => {
-  // try {
-  //   console.log("request received")
-  //   const text = await talk("beluga").then(res => res).catch(err => {
-  //     throw console.log(err)
-  //   } )
-  //   res.send(text)
-  // } catch (error) {
-  //   res.send(error)
-  // }
-});
+// app.get("/", async (req, res) => {
+//   // try {
+//   //   console.log("request received")
+//   //   const text = await talk("beluga").then(res => res).catch(err => {
+//   //     throw console.log(err)
+//   //   } )
+//   //   res.send(text)
+//   // } catch (error) {
+//   //   res.send(error)
+//   // }
+// });
 
-app.get("/test", async (req, res) => {
-  console.log("trying to reach you");
-  res.send("reached me");
-});
+app.post("/login", async (req, res) => {
+  const body = req.body;
+  const { email, password, username } = body;
+  console.log("request received");
 
-app.get("/image", async (req, res) => {
-  // try {
-  // const imageUrl = await GenerateImage()
-  // res.send(imageUrl)
-  // } catch (error) {
-  //   console.log(error)
-  // }
+  try {
+    let { data } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+    console.log(data);
+  } catch (error) {
+    console.log(error);
+  }
+
+  res.send({
+    email,
+    password,
+    username,
+  });
 });
 
 app.post("/signup", async (req, res) => {
@@ -430,19 +438,40 @@ app.post("/signup", async (req, res) => {
     .insert([{ email, password, username }])
     .select();
 
+  console.log(data);
+
   let { data: success, error: signupError } = await supabase.auth.signUp({
     email: email,
     password: password,
   });
 
+  console.log(success);
+  console.log(signupError);
+
   if (error) {
-    console.log(error);
+    throw error;
   }
 
   res.send({
     email,
     password,
     username,
+  });
+});
+
+app.get("/characters", async (req, res) => {
+  console.log("request received");
+  const query = `*[_type == "characters"]`;
+  const characters = await client.fetch(query).then((res) => res);
+
+  // map through list to replace avatar with readable url
+  const list = characters.map((character) => ({
+    ...character,
+    avatar: urlFor(character.avatar).url(),
+  }));
+
+  res.send({
+    characters: list,
   });
 });
 
@@ -484,56 +513,45 @@ app.post("/players", async (req, res) => {
   });
 });
 
-app.get("/characters", async (req, res) => {
-  console.log("request received");
-  const query = `*[_type == "characters"]`;
-  const characters = await client.fetch(query).then((res) => res);
-
-  // map through list to replace avatar with readable url
-  const list = characters.map((character) => ({
-    ...character,
-    avatar: urlFor(character.avatar).url(),
-  }));
-
-  res.send({
-    characters: list,
-  });
+app.get("/test", async (req, res) => {
+  console.log("trying to reach you");
+  res.send("reached me");
 });
 
-app.post("/login", async (req, res) => {
-  const body = req.body;
-  const { email, password, username } = body;
-  console.log("request received");
+// app.get("/image", async (req, res) => {
+//   // try {
+//   // const imageUrl = await GenerateImage()
+//   // res.send(imageUrl)
+//   // } catch (error) {
+//   //   console.log(error)
+//   // }
+// });
 
-  try {
-    let { data } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
-    console.log(data);
-  } catch (error) {
-    console.log(error);
-  }
+// app.post("/questions", (req, res) => {
+//   const body = req.body;
+//   const { level } = body;
+//   console.log("request received");
+
+//   console.log(level);
+
+//   const question = questions.filter((question) => question)[level];
+
+//   res.send({
+//     question,
+//     level: level + 1,
+//   });
+// });
+
+app.post("/getuser", async (req, res) => {
+  const body = req.body;
+  const { email } = body;
+  console.log(email);
+
+  const userQuery = `*[_type == "users" && email == "${email}"]`;
+  const username = await client.fetch(userQuery).then((res) => res[0].username);
 
   res.send({
-    email,
-    password,
     username,
-  });
-});
-
-app.post("/questions", (req, res) => {
-  const body = req.body;
-  const { level } = body;
-  console.log("request received");
-
-  console.log(level);
-
-  const question = questions.filter((question) => question)[level];
-
-  res.send({
-    question,
-    level: level + 1,
   });
 });
 
