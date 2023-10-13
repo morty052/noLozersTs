@@ -12,6 +12,8 @@ const SetPlayers = (CurrentPlayer: player, otherPlayers: player[]) => {
       statuseffects,
       ultimates,
       peeks,
+      username,
+      questions,
     } = enemy;
     return new Player({
       character,
@@ -21,6 +23,8 @@ const SetPlayers = (CurrentPlayer: player, otherPlayers: player[]) => {
       statuseffects,
       ultimates,
       peeks,
+      username,
+      questions,
     });
   });
 
@@ -33,6 +37,8 @@ const SetPlayers = (CurrentPlayer: player, otherPlayers: player[]) => {
     status,
     statuseffects,
     peeks,
+    username,
+    questions,
   } = CurrentPlayer;
 
   const player = new Player({
@@ -43,6 +49,8 @@ const SetPlayers = (CurrentPlayer: player, otherPlayers: player[]) => {
     status,
     statuseffects,
     peeks,
+    username,
+    questions,
   });
   console.log(characterAvatar);
 

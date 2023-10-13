@@ -4,9 +4,16 @@ import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components";
 import { useSocketcontext } from "@/hooks/useSocketContext";
 import { FaChevronLeft, FaChevronRight, FaEye, FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { Debuffs } from "@/classes/Player";
 
 export type character = {
-  name: "Arhuanran" | "Athena" | "Da Vinci" | "Ife" | "Washington";
+  name:
+    | "Arhuanran"
+    | "Athena"
+    | "Da Vinci"
+    | "Ife"
+    | "Washington"
+    | "Confucious";
   bio: string;
   avatar?: string;
   traits?: {
@@ -14,6 +21,7 @@ export type character = {
     peekType: string;
     lives: 2 | 3 | 4 | 6;
     ultimate: "REJUVENATE" | "INVENT" | "CONQUER" | "FORSEE";
+    debuff: Debuffs;
   };
 };
 

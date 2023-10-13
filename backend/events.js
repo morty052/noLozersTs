@@ -700,13 +700,21 @@ export function MatchEvents(socket, userNamespace) {
     }
   };
 
-  socket.on("TEST_POWER", (data, cb) => {
-    const { test } = data;
-    cb(test);
-  });
+  function generateQuestionsIndex() {
+    const randomNumber = Math.floor(Math.random() * 30); // Generate a random number between 0 and 30
+    const number1 = randomNumber;
+    const number2 = randomNumber + 20;
+
+    return {
+      start: number1,
+      end: number2,
+    };
+  }
 
   socket.on("SET_ROOM", async (data, cb) => {
     const { room_id, username, category } = data;
+    const { start, end } = generateQuestionsIndex();
+    console.log(start, end);
 
     try {
       let categoryName = category.replace("_", " ");
@@ -716,7 +724,7 @@ export function MatchEvents(socket, userNamespace) {
 
       console.log(categoryName);
       const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{players[]{...,controller -> {..., character -> {...}}}}`;
-      const questionQuery = `*[_type == "questions" && category match "${categoryName}"]`;
+      const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
 
       const questions = await client.fetch(questionQuery);
 
@@ -742,7 +750,7 @@ export function MatchEvents(socket, userNamespace) {
         .filter((player) => player.controller.username == username)
         .map((player) => {
           const { traits } = player.controller.character;
-          const { peeks, lives } = traits;
+          const { peeks, lives, ultimates } = traits;
           return {
             character: player.controller.character,
             characterAvatar: urlFor(player.controller.character.avatar).url(),
@@ -750,18 +758,18 @@ export function MatchEvents(socket, userNamespace) {
             points: player.points,
             lives: lives,
             peeks: peeks,
-            ultimates: player.ultimates,
+            ultimates: ultimates,
             status: player.status,
             statuseffects: player.statuseffects,
+            questions,
           };
         });
 
-      console.log(CurrentPlayer);
       const OtherPlayers = players
         .filter((player) => player.controller.username != username)
         .map((player) => {
           const { traits } = player.controller.character;
-          const { peeks, lives } = traits;
+          const { peeks, lives, ultimates } = traits;
           return {
             character: player.controller.character,
             characterAvatar: urlFor(player.controller.character.avatar).url(),
@@ -769,9 +777,10 @@ export function MatchEvents(socket, userNamespace) {
             points: player.points,
             lives,
             peeks,
-            ultimates: player.ultimates,
+            ultimates: ultimates,
             status: player.status,
             statuseffects: player.statuseffects,
+            questions,
           };
         });
 
@@ -850,12 +859,14 @@ export function MatchEvents(socket, userNamespace) {
 
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
   socket.on("USE_POWER", (data, cb) => {
-    const { character, room_id } = data;
-    userNamespace.in(`${room_id}`).emit("POWER_USED", character);
-    switch (character) {
+    const { name, room_id } = data;
+
+    cb(name);
+    userNamespace.in(room_id).emit("POWER_USED", name);
+
+    switch (name) {
       case "Arhuanran":
-        // userNamespace.in(`${room_id}`).emit("POWER_USED");
-        cb(character);
+        userNamespace.in(room_id).emit("POWER_USED", name);
         break;
       default:
         break;
@@ -868,11 +879,22 @@ export function MatchEvents(socket, userNamespace) {
     //   });
   });
 
+  socket.on("DEBUFF", (data, cb) => {
+    const { debuff, target_name, room_id, sender } = data;
+    console.log(debuff);
+    cb(debuff);
+    userNamespace.in(room_id).emit("DEBUFF_USED", {
+      debuff,
+      target_name,
+      sender,
+    });
+  });
+
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
   socket.on("PLAYER_DEATH", (data) => {
     const { room_id, username } = data;
 
-    io.in(room_id).emit("PLAYER_DEATH", username);
+    userNamespace.in(room_id).emit("PLAYER_DEATH", username);
   });
 
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS

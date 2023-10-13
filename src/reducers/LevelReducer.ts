@@ -80,7 +80,6 @@ const Levelreducer = (
 
     case "PLAYER_DEATH":
       remainingPlayers = removePlayer(action.payload.name as string);
-
       console.log(remainingPlayers);
       return { ...state, allPlayers: remainingPlayers };
 

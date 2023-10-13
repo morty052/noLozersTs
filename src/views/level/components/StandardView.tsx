@@ -2,7 +2,7 @@ import { player } from "@/types";
 import { ActionBar, ChoiceList, Screen } from ".";
 import { Socket } from "socket.io-client";
 
-interface IViewProps {
+type IViewProps = {
   CurrentPlayer: player;
   OtherPlayers: player[];
   choices: string[];
@@ -10,6 +10,10 @@ interface IViewProps {
   handleAnswer: (a: string) => void;
   correct_answer: string;
   scoreBoard: [];
+  room_id: string;
+  level: number;
+  setconfused: (c: boolean) => void;
+  confused: boolean;
   PowerParams: {
     answer: string;
     nextQuestion: string;
@@ -18,7 +22,7 @@ interface IViewProps {
     roomID: string;
     func: (lives: number, powerBars: number) => void;
   };
-}
+};
 
 const StandardView = ({
   CurrentPlayer,
@@ -29,17 +33,28 @@ const StandardView = ({
   correct_answer,
   scoreBoard,
   PowerParams,
+  room_id,
+  level,
+  confused,
+  setconfused,
 }: IViewProps) => {
+  // TODO: REMOVE USELESS PARAMETERS
   return (
     <>
       <div className="relative mx-auto h-screen max-w-2xl  bg-gray-300 sm:min-h-[700px]">
         <Screen question={question} CurrentPlayer={CurrentPlayer} />
         <ChoiceList
+          confused={confused}
+          setconfused={setconfused}
           correct_answer={correct_answer}
           handleAnswer={handleAnswer}
           choices={choices}
         />
         <ActionBar
+          confused={confused}
+          setconfused={setconfused}
+          level={level}
+          room_id={room_id}
           PowerParams={PowerParams}
           // correct_answer={correct_answer}
           CurrentPlayer={CurrentPlayer}
