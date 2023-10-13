@@ -54,7 +54,7 @@ const Level = () => {
     const { lives } = CurrentPlayer;
 
     if (lives == 1) {
-      console.log("player about to die");
+      console.log("player about to die now");
       socket?.emit("PLAYER_DEATH", {
         username: CurrentPlayer.username,
         room_id,
@@ -277,8 +277,7 @@ const Level = () => {
 
   // ?TESTING POWER
   function callPower(i: string) {
-    CurrentPlayer.Debuff("crushed");
-    socket?.emit("USE_POWER", { name: i, room_id }, (res: string) => {
+    socket?.emit("USE_POWER", { power: i, room_id }, (res: string) => {
       console.log(res);
     });
   }
