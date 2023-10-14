@@ -290,56 +290,65 @@ export function LobbyEvents(socket, userNamespace) {
     // ! ROOM_ID IS SAME AS ID OF HOST
     const { room_id } = data;
 
-    /*
-     * FILTER ROOMS ON BACKEND WITH ROOM_ID FROM EVENT DATA
-     * RETREIVE CREATED ROOM
-     * GET PLAYERS FROM REFERENCE
-     * GET CHARACTERS FROM PLAYERS REFERENCE ON SCHEMA
-     */
-    const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{category, players[]{...,controller -> {..., character -> {...}}}}`;
-    const room = await client.fetch(roomQuery).then((res) => res[0]);
+    try {
+      if (!room_id) {
+        throw "no room id";
+      }
 
-    // * DESTRUCTURE  PLAYERS & CATEGORY FROM ROOM OBJECT
-    const { players, category } = room;
+      console.log("this is room id", room_id);
+      /*
+       * FILTER ROOMS ON BACKEND WITH ROOM_ID FROM EVENT DATA
+       * RETREIVE CREATED ROOM
+       * GET PLAYERS FROM REFERENCE
+       * GET CHARACTERS FROM PLAYERS REFERENCE ON SCHEMA
+       */
+      const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{category, players[]{...,controller -> {..., character -> {...}}}}`;
+      const room = await client.fetch(roomQuery).then((res) => res[0]);
 
-    // * FILTER PLAYERS TO FIND HOST USING ROOM_ID
-    const host = players
-      .filter((player) => player.controller._id == room_id)
-      .map((player) => ({
-        points: player.points,
-        username: player.controller.username,
-        _id: player.controller._id,
-        character: player.controller.character,
-        characterAvatar: urlFor(player.controller.character.avatar).url(),
-      }));
+      // * DESTRUCTURE  PLAYERS & CATEGORY FROM ROOM OBJECT
+      const { players, category } = room;
 
-    /* 
-        * MAP THROUGH PLAYERS TO CREATE ARRAY WITH ONLY MEANINGFUL DATA
-        * FILTER PLAYERS TO EXCLUDE HOST
-          TODO: ADD URL FOR USER IMAGE WHEN MAPPING THROUGH PLAYERS 
-        */
+      // * FILTER PLAYERS TO FIND HOST USING ROOM_ID
+      const host = players
+        .filter((player) => player.controller._id == room_id)
+        .map((player) => ({
+          points: player.points,
+          username: player.controller.username,
+          _id: player.controller._id,
+          character: player.controller.character,
+          characterAvatar: urlFor(player.controller.character.avatar).url(),
+        }));
 
-    // console.log(host[0].characterAvatar);
+      /* 
+          * MAP THROUGH PLAYERS TO CREATE ARRAY WITH ONLY MEANINGFUL DATA
+          * FILTER PLAYERS TO EXCLUDE HOST
+            TODO: ADD URL FOR USER IMAGE WHEN MAPPING THROUGH PLAYERS 
+          */
 
-    const guests = players
-      .map((player) => ({
-        points: player.points,
-        ready: !player.ready ? false : true,
-        username: player.controller.username,
-        _id: player.controller._id,
-        character: player.controller.character,
-        characterAvatar: urlFor(player.controller.character.avatar).url(),
-      }))
-      .filter((player) => player._id != room_id);
+      // console.log(host[0].characterAvatar);
 
-    // * ADD ALL SOCKETS TO THE CURRENT ROOM
-    socket.join(`${room_id}`);
+      const guests = players
+        .map((player) => ({
+          points: player.points,
+          ready: !player.ready ? false : true,
+          username: player.controller.username,
+          _id: player.controller._id,
+          character: player.controller.character,
+          characterAvatar: urlFor(player.controller.character.avatar).url(),
+        }))
+        .filter((player) => player._id != room_id);
 
-    // * CALL FUNCTION TO SET CATEGORY AND PLAYERS IN ROOM
-    cb({
-      category,
-      players: [host[0], ...guests],
-    });
+      // * ADD ALL SOCKETS TO THE CURRENT ROOM
+      socket.join(`${room_id}`);
+
+      // * CALL FUNCTION TO SET CATEGORY AND PLAYERS IN ROOM
+      cb({
+        category,
+        players: [host[0], ...guests],
+      });
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   socket.on("SEND_INVITATION", async (data) => {
@@ -347,30 +356,22 @@ export function LobbyEvents(socket, userNamespace) {
      * get target user socket id from data to send message to specific user clicked
      * username is the username of the host i.e the sender of the invitation gotten from data
      */
-    const { _id, username, room_id } = data;
 
-    console.log(room_id);
+    // !ORIGINAL FUNCTION
+    // const { _id, username, room_id } = data;
+
+    const { target_user, room_id, sender } = data;
+    console.log(target_user);
 
     try {
-      if (!username) {
+      if (!target_user) {
         throw console.log("username not found");
       }
-      // const query = `*[_type == "users" && username == "${username}"]`;
-      // const host_id = await client.fetch(query).then((res) => res[0]._id);
-      // const roomQuery = `*[_type == "rooms" && room_id == "${host_id}"]`;
-      // const room = await client.fetch(roomQuery).then((res) => res[0]);
-
-      // if (!room) {
-      //    throw console.log("Room not found")
-      // }
-
-      //  const room_id = room._id;
-      //  const category = room.category;
 
       // * send invitation event to target user
       // ? send target socket id back to target why ?
-      userNamespace.to(`user_${_id}`).emit("INVITATION", {
-        username,
+      userNamespace.to(`user_${target_user}`).emit("INVITATION", {
+        username: sender,
         _id: room_id,
         // category,
       });
@@ -430,6 +431,20 @@ export function LobbyEvents(socket, userNamespace) {
     }
   });
 
+  socket.on("FRIEND_REQUEST", async (data) => {
+    const { username, sender } = data;
+    console.log("there is a friend request for > ", username);
+
+    userNamespace
+      .to(`user_${username}`)
+      .emit("FRIEND_REQUEST_RECEIVED", { username: sender });
+
+    // TODO: ADD FRIEND REQUEST TO DATABASE
+    function addFriendRequest(params) {
+      // .......
+    }
+  });
+
   socket.on("READY_PLAYER", async (data, cb) => {
     const { player, room_id } = data;
     cb("YOU ARE READY");
@@ -467,92 +482,144 @@ export function LobbyEvents(socket, userNamespace) {
     // * DESCTRUCTURE HOST USERNAME AND CATEGORY FROM DATA
     const { username, category } = data;
 
-    console.log("this is category", category);
+    try {
+      if (!username || !category) {
+        throw "Fields missing error";
+      }
 
-    // * FIND USER WITH USERNAME EQUAL TO HOST USERNAME
-    const query = `*[_type == "users" && username == "${username}"]`;
-    const user = await client.fetch(query).then((res) => res[0]);
-    const userRef = user._id;
+      console.log("this is category", category);
 
-    /*
-     * ASSIGN USER ID TO ROOM ID FOR EASY REFERENCE LATER
-     * SET ROOM CATEGORY FROM EVENT DATA
-     */
+      // * FIND USER WITH USERNAME EQUAL TO HOST USERNAME
+      const query = `*[_type == "users" && username == "${username}"]`;
+      const user = await client.fetch(query).then((res) => res[0]);
+      const userRef = user._id;
 
-    // TODO: decide if to change back to random id or keep as host userid
-    const room = {
-      _type: "rooms",
-      room_id: userRef,
-      category: category,
-    };
+      /*
+       * ASSIGN USER ID TO ROOM ID FOR EASY REFERENCE LATER
+       * SET ROOM CATEGORY FROM EVENT DATA
+       */
 
-    // *CREATE ROOM / RERTEIVE CREATED ROOM ID
-    const res = await client.create(room).then((res) => res._id);
+      // TODO: decide if to change back to random id or keep as host userid
+      const room = {
+        _type: "rooms",
+        room_id: userRef,
+        category: category,
+      };
 
-    /*
-     * ADD HOST TO CREATED ROOM
-     * RETREIVE ROOM_ID TO SEND BACK TO CLIENT SIDE
-     */
+      // *CREATE ROOM / RERTEIVE CREATED ROOM ID
+      const res = await client.create(room).then((res) => res._id);
 
-    const room_id = await client
-      .patch(res)
-      .setIfMissing({ players: [] })
-      .insert("after", "players[-1]", [
-        {
-          controller: {
-            _type: "reference",
-            _ref: `${userRef}`,
+      /*
+       * ADD HOST TO CREATED ROOM
+       * RETREIVE ROOM_ID TO SEND BACK TO CLIENT SIDE
+       */
+
+      const room_id = await client
+        .patch(res)
+        .setIfMissing({ players: [] })
+        .insert("after", "players[-1]", [
+          {
+            controller: {
+              _type: "reference",
+              _ref: `${userRef}`,
+            },
+            points: 0,
+            status: {
+              alive: true,
+            },
+            statuseffects: {
+              none: true,
+            },
           },
-          points: 0,
-          status: {
-            alive: true,
-          },
-          statuseffects: {
-            none: true,
-          },
-        },
-      ])
-      .commit({ autoGenerateArrayKeys: true })
-      .then((res) => res.room_id);
+        ])
+        .commit({ autoGenerateArrayKeys: true })
+        .then((res) => res.room_id);
 
-    //*MAKE HOST SOCKET JOIN ROOM ID
-    socket.join(room_id);
+      //*MAKE HOST SOCKET JOIN ROOM ID
+      socket.join(room_id);
 
-    // *SEND CREATED ROOM ID BACK TO CLIENT SIDE
-    cb(room_id);
+      // *SEND CREATED ROOM ID BACK TO CLIENT SIDE
+      cb(room_id);
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   // TODO REDUCE AMOUNT OF DATA FETCHED
   socket.on("JOIN_USER", async (data) => {
     const { username, host, _id } = data;
 
-    const hostQuery = `*[_type == "users" && username == "${host}"]`;
-    const guestQuery = `*[_type == "users" && username == "${username}"]`;
+    try {
+      if (!username || !host || !_id) {
+        console.table([username, host, _id]);
+        throw "Fields missing error";
+      }
 
-    const guestRef = await client.fetch(guestQuery).then((res) => res[0]);
+      const hostQuery = `*[_type == "users" && username == "${host}"]`;
+      const guestQuery = `*[_type == "users" && username == "${username}"]`;
 
-    const hostObject = await client.fetch(hostQuery).then((res) => res[0]);
-    const host_id = hostObject._id;
+      const guestRef = await client.fetch(guestQuery).then((res) => res[0]);
 
-    const categoryQuery = `*[_type == "rooms" && room_id == "${_id}"]{category}`;
-    const category = await client
-      .fetch(categoryQuery)
-      .then((res) => res[0].category);
+      const hostObject = await client.fetch(hostQuery).then((res) => res[0]);
+      const host_id = hostObject._id;
 
-    console.log("ACCEPTED INVITE FROM", _id);
+      // * GET ROOM TO ADD GUEST ON BACKEND USING HOST ID
+      // ? ROOM_ID ALWAYS SAME AS HOST ID
+      const roomQuery = `*[_type == "rooms" && room_id == "${host_id}"]`;
 
-    /*
-         * !SEND EVENT TO GUEST SOCKET
-         * DATA BEING SENT BACK TO GUEST IS THE HOST ID 
-         * HOST ID IS THE SAME AS ROOM ID TO NAVIGATE TO ON GUEST SIDE
-           TODO: ADD MEANINGFUL DATA TO EMIT EVENT
-          */
-    socket.emit("JOIN_HOST_ROOM", { _id, category });
+      const target_room_id = await client
+        .fetch(roomQuery)
+        .then((res) => res[0]._id);
 
-    // * SEND EVENT TO HOST SOCKET
-    userNamespace
-      .to(`user_${_id}`)
-      .emit("INVITATION_ACCEPTED", { guestRef, host_id });
+      if (!target_room_id) {
+        throw console.log("room not found");
+      }
+
+      console.log("this is target room id", target_room_id);
+
+      // * GET ROOM TO PATCH USING DESTRUCTURED ID
+      await client
+        .patch(target_room_id)
+        .setIfMissing({ players: [] })
+        .insert("after", "players[-1]", [
+          {
+            controller: {
+              _type: "reference",
+              _ref: `${guestRef._id}`,
+            },
+            points: 0,
+            status: {
+              alive: true,
+            },
+            statuseffects: {
+              none: true,
+            },
+          },
+        ])
+        .commit({ autoGenerateArrayKeys: true });
+
+      const categoryQuery = `*[_type == "rooms" && room_id == "${_id}"]{category}`;
+      const category = await client
+        .fetch(categoryQuery)
+        .then((res) => res[0].category);
+
+      console.log("ACCEPTED INVITE FROM", _id);
+
+      /*
+           * !SEND EVENT TO GUEST SOCKET
+           * DATA BEING SENT BACK TO GUEST IS THE HOST ID 
+           * HOST ID IS THE SAME AS ROOM ID TO NAVIGATE TO ON GUEST SIDE
+             TODO: ADD MEANINGFUL DATA TO EMIT EVENT
+            */
+      socket.emit("JOIN_HOST_ROOM", { _id, category });
+
+      // * SEND EVENT TO HOST SOCKET
+      userNamespace
+        .to(`user_${host}`)
+        .emit("INVITATION_ACCEPTED", { guestRef, host_id });
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   socket.on("ADD_GUEST", async (data, cb) => {

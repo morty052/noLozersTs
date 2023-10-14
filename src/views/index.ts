@@ -4,6 +4,7 @@ import { default as SignUp } from "./signup/Signup";
 import { default as Login } from "./login/Login";
 import { default as Lobby } from "./lobby/Lobby";
 import { default as SplashScreen } from "./splashscreen/SplashScreen";
+import { default as OnlineFriends } from "./onlinefriends/OnlineFriends";
 import Level from "./level/Level";
 import SinglePlayerLevel from "./SinglePlayerLevel";
 
@@ -16,4 +17,5 @@ export {
   Lobby,
   Login,
   SplashScreen,
+  OnlineFriends,
 };

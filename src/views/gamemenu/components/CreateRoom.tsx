@@ -1,13 +1,23 @@
 import { useState, useEffect, useReducer } from "react";
 import { useSocketcontext } from "@/hooks/useSocketContext";
-import { TopicScreen } from ".";
-import { All_Categories } from "@/constants";
 import { player } from "@/types/player";
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components";
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button } from "@/components";
 import { Lobby } from "@/views";
 import { message } from "antd";
 import { Routes, Route, useParams } from "react-router-dom";
 import { useUserContext } from "@/contexts/userContext";
+import { useSignIn } from "@clerk/clerk-react";
+
+function SignInStep() {
+  const { isLoaded, signIn } = useSignIn();
+
+  if (!isLoaded) {
+    // handle loading state
+    return null;
+  }
+
+  return <div>The current sign in attempt status is {signIn.status}.</div>;
+}
 
 const defaultRoomState = {
   roomCreated: false,
@@ -27,7 +37,21 @@ type Tactions =
 
 type TroomActions = {
   type: Tactions;
-  payload?: any;
+  payload?: unknown;
+};
+
+type TroomProps = {
+  invitedPlayers: player[];
+  category: string;
+  hostname: string;
+  friends: player[];
+  invitePlayer: (
+    s: string | undefined,
+    u: string,
+    r: string
+  ) => void | undefined;
+  addGuest: (s: string | undefined, s2: string | undefined, s3: string) => void;
+  room_id: string;
 };
 
 type TdefaultState = {
@@ -87,15 +111,112 @@ function createRoomReducer(state: TdefaultState, action: TroomActions) {
   }
 }
 
-export function Room({
-  invitedPlayers,
-  category,
-  hostname,
-  friends,
+function OnlineFriends(friends, invitePlayer, room_id) {
+  const { username } = useUserContext();
+  console.log(friends);
+  if (!friends) {
+    return <div>Loading</div>;
+  }
+
+  return (
+    <div className="mt-10">
+      <p>Online Friends:</p>
+      <div className="">
+        {friends?.friends.map((player: player, index: number) => (
+          // * GET TARGET PLAYER ID
+          // ? AND USERNAME
+          <p
+            onClick={() => invitePlayer(player._id, username, room_id)}
+            key={index}
+          >
+            {player.username}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BottomNav() {
+  return (
+    <div className="fixed bottom-2 left-0 flex w-full justify-center  bg-red-300">
+      <div className="w-4/5 border">
+        <p>yoo hoo</p>
+      </div>
+    </div>
+  );
+}
+
+function Search({
+  playerName,
+  setplayerName,
+  handleCreation,
   invitePlayer,
-  room_id,
-  setCategory,
+  players,
 }) {
+  // * FILTER PLAYERS USING SEARCH QUERY
+  const results =
+    players?.length > 1
+      ? players.filter((player: player) => player.username.includes(playerName))
+      : [];
+  return (
+    <div className="">
+      <form action="">
+        <div className="flex flex-col gap-y-4">
+          <div className="relative">
+            <input
+              value={playerName}
+              onChange={(e) => setplayerName(e.target.value)}
+              className="h-10 w-full rounded-lg border p-2 placeholder:text-center"
+              placeholder="Type to search players"
+              type="text"
+              name=""
+              id=""
+            />
+            <p className="mt-1 text-center text-xs text-gray-600">
+              Search players by username to add to your private room
+            </p>
+
+            <aside
+              className={`${
+                !playerName ? "hidden" : "block"
+              } absolute inset-x-0 top-12 z-10 rounded-xl border bg-white p-4 shadow-xl`}
+            >
+              Display message if no results match search
+              {playerName && results.length < 1 && (
+                <p>No results match your search</p>
+              )}
+              {results?.map((player: player, index: number) => (
+                <p
+                  onClick={() => {
+                    invitePlayer(player.socket);
+                    setplayerName("");
+                  }}
+                  key={index}
+                >
+                  {player.username}
+                </p>
+              ))}
+              <div className="mt-2 bg-red-300">
+                <p>Click on player to send invite</p>
+              </div>
+            </aside>
+          </div>
+          <Button
+            onClick={(e) => {
+              e.preventDefault();
+              handleCreation();
+            }}
+          >
+            Search Players
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export function Room({ friends, invitePlayer, room_id }: TroomProps) {
   // TODO:change username location
   const { username } = useUserContext();
 
@@ -111,7 +232,7 @@ export function Room({
         </TabsList>
 
         <TabsContent value="ONLINE_FRIENDS">
-          <div className="mt-10">
+          {/* <div className="mt-10">
             <p>Online Friends:</p>
             <div className="">
               {friends?.map((player: player, index: number) => (
@@ -125,7 +246,7 @@ export function Room({
                 </p>
               ))}
             </div>
-          </div>
+          </div> */}
         </TabsContent>
 
         <TabsContent value="SEARCH_FRIENDS">
@@ -188,11 +309,7 @@ export function Room({
         </TabsContent>
 
         <TabsContent value="LOBBY">
-          <Lobby
-            hostname={hostname}
-            category={category}
-            invitedPlayers={invitedPlayers}
-          />
+          <Lobby />
         </TabsContent>
       </Tabs>
     </>
@@ -212,16 +329,10 @@ function CreateRoom() {
   const { room_id } = useParams();
   console.log("this is room", room_id);
 
-  // * FILTER PLAYERS USING SEARCH QUERY
-  const results =
-    players.length > 1
-      ? players.filter((player: player) => player.username.includes(playerName))
-      : [];
-
   const { socket } = useSocketcontext();
 
   // TODO:Change username location
-  const username = localStorage.getItem("username");
+  const { username } = useUserContext();
 
   // * CREATE ROOM FUNCTION
   function handleCreation(category: string) {
@@ -363,8 +474,31 @@ function CreateRoom() {
             />
           }
         />
+        <Route
+          path="/search"
+          element={
+            <Search
+              playerName={playerName}
+              invitePlayer={invitePlayer}
+              handleCreation={handleCreation}
+              setplayerName={setplayerName}
+              players={players}
+            />
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <OnlineFriends
+              friends={friends}
+              room_id={room_id}
+              invitePlayer={invitePlayer}
+            />
+          }
+        />
+        <Route path="/test" element={<SignInStep />} />
       </Routes>
-
+      <BottomNav />
       {/* {!category && (
         <TopicScreen
           categories={All_Categories}

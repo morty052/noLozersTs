@@ -4,6 +4,7 @@ import Hero from "./Hero";
 import Layout from "./Layout";
 import InvitationModal from "./InvitationModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import MatchMaker from "./matchmaker/MatchMaker";
 import {
   Dialog,
   DialogContent,
@@ -29,4 +30,5 @@ export {
   DialogTitle,
   DialogTrigger,
   InvitationModal,
+  MatchMaker,
 };

@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { useUserContext } from "@/contexts/userContext";
 
 // interface IgameProps{
 //   setSinglePlayer:(mode:string) => void,
@@ -7,8 +6,6 @@ import { useUserContext } from "@/contexts/userContext";
 // }
 
 function GameOptions() {
-  const { username } = useUserContext();
-
   return (
     <div className="">
       <Link

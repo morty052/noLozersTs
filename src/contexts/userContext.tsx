@@ -22,10 +22,17 @@ type ContextValue = {
     email: string,
     password: string
   ) => Promise<{ user: User; session: Session } | undefined>;
+  signup: (
+    email: string,
+    password: string
+  ) => Promise<{ user: User; session: Session } | undefined>;
 };
 
 const UserContext = createContext<ContextValue>({
   user: null,
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   HandleSignin: async () => undefined,
 });
 
@@ -50,10 +57,32 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
         throw error;
       }
 
-      const { user: User } = user;
-      const { role, email } = User;
-      console.log(role);
+      // const { user: User } = user;
+      // const { role, email } = User;
+      // console.log(role);
       setusername(email as string);
+
+      return user;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function HandleSignup(email: string, password: string) {
+    try {
+      const { data: user, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // const { user: User } = user;
+      // const { role, email: UserEmail } = User;
+      console.log(user);
+      // setusername(UserEmail as string);
 
       return user;
     } catch (error) {
@@ -62,45 +91,16 @@ export function UserContextProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    if (username) {
-      return;
-    }
-    async function fetchUser() {
-      // const user = supabase.auth.onAuthStateChange((event, session) => {
-      //   if (event === "SIGNED_IN") {
-      //     setusername(session?.user?.email as string);
-      //   }
-      // });
-
-      const { data } = await supabase.auth.getUser();
-      const { user: userdata } = data;
-      const email = userdata?.email;
-
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "insomnia/8.0.0",
-        },
-        body: `{"email":"${email}"}`,
-      };
-
-      await fetch("http://localhost:3000/getuser", options)
-        .then((response) => response.json())
-        .then((response) => setusername(response.username))
-        .catch((err) => console.error(err));
-    }
-    fetchUser();
-
-    return () => {
-      ("");
-    };
-  }, [username]);
-
   return (
     <UserContext.Provider
-      value={{ user: null, signin: HandleSignin, username: username }}
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      value={{
+        user: null,
+        signin: HandleSignin,
+        signup: HandleSignup,
+        username: username,
+      }}
     >
       {children}
     </UserContext.Provider>

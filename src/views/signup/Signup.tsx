@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components";
+import { SignUp as ClerkSignUp } from "@clerk/clerk-react";
 
-function SignUp() {
+function BackupSignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -73,7 +74,7 @@ function SignUp() {
               onChange={(e) => setPassword(e.target.value)}
               className="rounded-lg border-b p-2"
               placeholder="password"
-              type="password"
+              type="text"
             />
           </div>
 
@@ -84,6 +85,52 @@ function SignUp() {
         </form>
       </section>
     </main>
+  );
+}
+
+function SignUp() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+
+  async function handleSignUp(e) {
+    e.preventDefault();
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "insomnia/8.0.0",
+      },
+      body: `{"email":"${email}","password":"${password}", "username":"${username}"}`,
+    };
+
+    if (!email || !password) {
+      return;
+    }
+
+    try {
+      fetch("http://localhost:3000/signup", options)
+        .then((response) => response.json())
+        .then((response) => {
+          console.log(response);
+          localStorage.setItem("username", username);
+          window.location.assign(`/menu`);
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  return (
+    <ClerkSignUp
+      appearance={{
+        elements: {
+          card: "bg-red-300",
+        },
+      }}
+      path="/signup"
+      redirectUrl={"/menu"}
+    />
   );
 }
 

@@ -13,11 +13,22 @@ import {
   Lobby,
   Login,
   SplashScreen,
+  OnlineFriends,
 } from "./views";
 import "./globals.css";
 import { Layout } from "./components";
-import { CreateRoom, TopicScreen } from "./views/gamemenu/components";
-import { UserContextProvider } from "./contexts/userContext";
+import {
+  CreateRoom,
+  TopicScreen,
+  CharacterSelect,
+} from "./views/gamemenu/components";
+
+import { ClerkProvider } from "@clerk/clerk-react";
+
+if (!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
+  throw new Error("Missing Publishable Key");
+}
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const Router = createBrowserRouter(
   createRoutesFromElements(
@@ -28,10 +39,12 @@ const Router = createBrowserRouter(
       {/* HOME OF THE SOCKET */}
       <Route element={<Layout />}>
         <Route path="/menu/*" element={<GameMenu />} />
-        <Route path="/lobby/:room_id/:category/" element={<Lobby />} />
-        <Route path="/test/" element={<Test />} />
-        <Route path="/room/category" element={<TopicScreen />} />
-        <Route path="/room/:room_id" element={<CreateRoom />} />
+        <Route path="/character" element={<CharacterSelect />} />
+        <Route path="/friends" element={<OnlineFriends />} />
+        <Route path="/category" element={<TopicScreen />} />
+        <Route path="/lobby/:room_id/*" element={<Test />} />
+        {/* <Route path="/lobby/:room_id/:category/" element={<Lobby />} /> */}
+        <Route path="/room/:room_id/*" element={<CreateRoom />} />
         <Route path="/level/:room_id/:category" element={<Level />} />
         <Route
           path="/singlelevel/:room/:username/:category"
@@ -45,9 +58,9 @@ const Router = createBrowserRouter(
 function App() {
   return (
     <>
-      <UserContextProvider>
+      <ClerkProvider publishableKey={clerkPubKey}>
         <RouterProvider router={Router} />
-      </UserContextProvider>
+      </ClerkProvider>
       {/* <InvitationModal /> */}
     </>
   );

@@ -11,6 +11,7 @@ import { SetPlayers } from "./features";
 import Levelreducer, { LevelState } from "@/reducers/LevelReducer";
 import { player } from "@/types";
 import { character } from "../gamemenu/components/CharacterSelect";
+import { useUser } from "@clerk/clerk-react";
 
 const Level = () => {
   const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
@@ -21,7 +22,10 @@ const Level = () => {
   const { room_id, category } = useParams();
 
   // TODO:CHANGE LOCATION OF USERNAME
-  const username = localStorage.getItem("username");
+  // const username = localStorage.getItem("username");
+  const { user, isLoaded } = useUser();
+
+  const username = user?.username;
 
   const {
     ended,

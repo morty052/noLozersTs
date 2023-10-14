@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components";
 import { useUserContext } from "@/contexts/userContext";
+import { SignIn } from "@clerk/clerk-react";
 
-function Login() {
+function LoginBackup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -93,6 +94,10 @@ function Login() {
       </section>
     </main>
   );
+}
+
+function Login() {
+  return <SignIn redirectUrl={"/menu"} />;
 }
 
 export default Login;

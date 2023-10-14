@@ -9,7 +9,9 @@ import {
 import useSocket from "../hooks/useSocket";
 import SocketReducer, { defaultContextState } from "../reducers/SocketReducer";
 import { Socket } from "socket.io-client";
-import { useUserContext } from "./userContext";
+import { useUser } from "@clerk/clerk-react";
+import { message } from "antd";
+import { InvitationModal } from "@/components";
 
 interface IsocketProps {
   socket: Socket | null;
@@ -28,6 +30,9 @@ export const SocketContextProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const [inviteReceived, setinviteReceived] = useState(false);
+  const [host, sethost] = useState([]);
+
   // const socket = useSocket("https://snapdragon-cerulean-pulsar.glitch.me/",{
   const socket = useSocket("http://localhost:5000/user", {
     reconnectionAttempts: 5,
@@ -62,9 +67,16 @@ export const SocketContextProvider = ({
     });
   };
 
-  const { username } = useUserContext();
+  const { isSignedIn, user, isLoaded } = useUser();
+
+  const { username } = user || {};
 
   const SendHandShake = () => {
+    if (!isSignedIn) {
+      socket.emit("handshake", { isGuest: true });
+      setloading(false);
+      return;
+    }
     socket.emit("handshake", { username });
     setloading(false);
   };
@@ -86,11 +98,38 @@ export const SocketContextProvider = ({
     StartListeners();
 
     // send handshake
-    if (!username) {
-      return;
-    }
     SendHandShake();
-  }, [socket, username]);
+  }, [isSignedIn, socket]);
+
+  useEffect(() => {
+    socket?.on("FRIEND_REQUEST_RECEIVED", (data) => {
+      /*
+       * DISPLAY FRIEND REQUEST
+       TODO: UPDATE NOTIFICATIONS
+       */
+
+      const { username } = data;
+      message.info(`Friend request received from ${username}`);
+      setinviteReceived(true);
+    });
+
+    socket?.on("INVITATION", (res) => {
+      /*
+       * OPEN MODAL / STORE HOST'S USERNAME AND ROOM_ID
+       * ROOM_ID IS ALWAYS THE SAME AS THE HOST'S _ID GOTTEN FROM INVITATION
+       */
+      console.log(res);
+      sethost(res);
+      setinviteReceived(true);
+    });
+
+    socket?.on("JOIN_HOST_ROOM", (res) => {
+      const { _id } = res;
+      console.log(res);
+
+      window.location.assign(`/lobby/${_id}`);
+    });
+  }, [socket]);
 
   if (loading) {
     return <h3>Loading</h3>;
@@ -99,6 +138,12 @@ export const SocketContextProvider = ({
   return (
     <SocketContext.Provider value={{ SocketState, SocketDispatch, socket }}>
       {children}
+      {inviteReceived && (
+        <InvitationModal
+          host={host}
+          closeModal={() => setinviteReceived(false)}
+        />
+      )}
     </SocketContext.Provider>
   );
 };

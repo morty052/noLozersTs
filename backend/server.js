@@ -335,7 +335,13 @@ const userNamespace = io.of("/user");
 
 userNamespace.on("connect", (socket) => {
   socket.on("handshake", async (data) => {
-    const { username } = data;
+    const { username, isGuest } = data;
+
+    if (isGuest) {
+      console.log("its a guest");
+      return;
+    }
+
     console.log(username);
     const query = `*[_type == "users" && username == "${username}"]`;
     try {
@@ -349,10 +355,10 @@ userNamespace.on("connect", (socket) => {
       const user_id = user._id;
 
       if (!user) {
-        throw console.log("something went wrong");
+        throw "something went wrong";
       }
 
-      socket.join(`user_${user_id}`);
+      socket.join(`user_${username}`);
 
       await client
         .patch(user_id)
@@ -440,13 +446,13 @@ app.post("/signup", async (req, res) => {
 
   console.log(data);
 
-  let { data: success, error: signupError } = await supabase.auth.signUp({
-    email: email,
-    password: password,
-  });
+  // let { data: success, error: signupError } = await supabase.auth.signUp({
+  //   email: email,
+  //   password: password,
+  // });
 
-  console.log(success);
-  console.log(signupError);
+  // console.log(success);
+  // console.log(signupError);
 
   if (error) {
     throw error;
@@ -477,18 +483,27 @@ app.get("/characters", async (req, res) => {
 
 app.post("/friends", async (req, res) => {
   const body = req.body;
-  const { username } = body;
-  const playerQuery = `*[_type == "users" && username == "${username}"]{friends[] -> {...}}`;
-  const players = await client.fetch(playerQuery).then((res) => res[0]);
-  const { friends } = players;
-  const onlineFriends = friends.filter((friend) => friend.online);
 
-  // const query = `*[_type == "users" && references("${playerRef}")]`
-  // const players = await client.fetch(query).then(res => res)
+  try {
+    const { username } = body;
+    console.log("this is", username);
+    if (!username) {
+      throw new Error("username not found");
+    }
+    const playerQuery = `*[_type == "users" && username == "${username}"]{friends[] -> {...}}`;
+    const players = await client.fetch(playerQuery).then((res) => res[0]);
+    if (!players) {
+      throw new Error("user not found");
+    }
+    const { friends } = players;
+    const onlineFriends = friends.filter((friend) => friend.online);
 
-  res.send({
-    onlineFriends,
-  });
+    res.send({
+      onlineFriends,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.post("/players", async (req, res) => {
@@ -548,11 +563,21 @@ app.post("/getuser", async (req, res) => {
   console.log(email);
 
   const userQuery = `*[_type == "users" && email == "${email}"]`;
-  const username = await client.fetch(userQuery).then((res) => res[0].username);
 
-  res.send({
-    username,
-  });
+  try {
+    if (email == "undefined") {
+      throw "error: email not found";
+    }
+    const username = await client
+      .fetch(userQuery)
+      .then((res) => res[0].username);
+    res.send({
+      username,
+    });
+  } catch (error) {
+    console.log(error);
+    res.send("error");
+  }
 });
 
 app.listen("3000", () => {

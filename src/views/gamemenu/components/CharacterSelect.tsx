@@ -4,7 +4,7 @@ import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components";
 import { useSocketcontext } from "@/hooks/useSocketContext";
 import { FaChevronLeft, FaChevronRight, FaEye, FaHeart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { Debuffs } from "@/classes/Player";
+import { Debuffs, characterName } from "@/classes/Player";
 
 export type character = {
   name:
@@ -73,7 +73,7 @@ export function MiniCharacterSelect({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className="absolute -top-48 z-10 min-h-[180px] w-full max-w-xs rounded-xl bg-red-300 p-4 shadow-xl">
+    <div className="absolute -top-48 z-10 min-h-[180px] w-full max-w-sm rounded-xl bg-red-300 p-4 shadow-xl">
       {!characters ? (
         <div className=" flex h-[70px] w-full flex-col items-center justify-center ">
           <p>..loading</p>
@@ -101,7 +101,11 @@ export function MiniCharacterSelect({
   );
 }
 
-function CharacterSelect({ func }: { func: (character: character) => void }) {
+function CharacterSelect({
+  func,
+}: {
+  func: (character: characterName) => void;
+}) {
   const state = {
     index: 0,
     characters: [],
@@ -171,8 +175,8 @@ function CharacterSelect({ func }: { func: (character: character) => void }) {
 
   const username = localStorage.getItem("username");
 
-  function handleCharacter(activeCharacter: character) {
-    func(activeCharacter);
+  function handleCharacter(activeCharacter: unknown) {
+    func(activeCharacter as characterName);
     socket?.emit("SET_CHARACTER", { character: activeCharacter, username });
   }
 

@@ -3,10 +3,13 @@ import { useSocketcontext } from "@/hooks/useSocketContext";
 import { useEffect, useState, useLayoutEffect } from "react";
 import { player, category } from "@/types";
 import { Button } from "@/components";
-import { TopicScreen, CharacterSelect } from "../gamemenu/components";
+import { CharacterSelect } from "../gamemenu/components";
 import { All_Categories } from "@/constants";
 import { FaUser } from "react-icons/fa";
 import { MiniCharacterSelect } from "../gamemenu/components/CharacterSelect";
+import { useUserContext } from "@/contexts/userContext";
+import { useUser } from "@clerk/clerk-react";
+import { message } from "antd";
 
 type TSearchOnlinePlayersProps = {
   players?: player[] | null;
@@ -138,11 +141,11 @@ function PlayerBar({
     //   )}
     // </div>
 
-    <div className="relative max-w-xs">
+    <div className="relative  max-w-sm">
       {/* MAIN PLAYER BAR */}
       <div
         onClick={() => setswitchingCharacter(!switchingCharacter)}
-        className="relative flex max-w-xs  items-center justify-between rounded-lg border px-4 py-1 "
+        className="relative flex max-w-sm  items-center justify-between rounded-lg border px-4 py-1 "
       >
         {/* USERNAME AND CHARACTER AVATAR AND ICON */}
         <div className="flex items-center gap-x-2">
@@ -214,6 +217,11 @@ function Lobby() {
   const [playerReady, setplayerReady] = useState(false);
 
   const { room_id } = useParams();
+  // TODO GET USERNAME FROM SOMEWHERE ELSE
+  const { user, isLoaded } = useUser();
+
+  const username = user?.username;
+
   console.log(room_id);
   const { socket } = useSocketcontext();
 
@@ -258,22 +266,21 @@ function Lobby() {
       console.log(res);
       const { players, category } = res;
 
-      // TODO GET USERNAME FROM SOMEWHERE ELSE
-      const username = localStorage.getItem("username");
-
       //* DETERMINE CURRENT USER BY COMPARING USERNAME WITH ALL USERS IN PLAYERS ARRAY
       const currentuser = players.find((player) => player.username == username);
       const host = players.find((player) => player._id == room_id);
       console.log("this is host", host);
 
       //  * SET PLAYER ID TO DETERMINE HOST ID LATER
-      console.log(currentuser);
-      setCurrentPlayer(currentuser);
-      setAllPlayers(players);
-      setPlayerID(currentuser._id);
-      setHost(host);
-      setCategory(category);
-      setloading(false);
+      if (isLoaded) {
+        console.log(currentuser);
+        setCurrentPlayer(currentuser);
+        setAllPlayers(players);
+        setPlayerID(currentuser?._id);
+        setHost(host);
+        setCategory(category);
+        setloading(false);
+      }
 
       //TODO: DETERMINE WHEN TO STOP LOADING
       // setloading(false)
@@ -285,6 +292,27 @@ function Lobby() {
   }, [socket]);
 
   useEffect(() => {
+    socket?.on("INVITATION_ACCEPTED", (data) => {
+      const { guestRef, host_id } = data;
+      console.log(guestRef, host_id);
+      /* 
+      * SAVE INCOMING PLAYER TO APP STATE AS "guestRef"
+      * GET host_id FROM EVENT 
+      * EMIT "room_id" AS "host_id" TO SOCKET FOR GUEST SOCKET AND GUEST TO JOIN
+      ! THIS FUNCTION FIRES "ADD_GUEST" EVENT DISPATCH TO REDUCER
+      ! THIS FUNCTION CALLS "addGuest" FUNCTION FROM REDUCER BY PASSING IT AS A PAYLOAD 
+      ! THIS FUNCTIONS SENDS GUEST USERNAME TO RENDER AS POPUP
+      */
+
+      // * FIRE ADD_GUEST DISPATCH WHEN THIS EVENT IS CALLED ON SERVER SIDE
+
+      message.info("getting there");
+      // CreateRoomDispatch({
+      //   type: "ADD_GUEST",
+      //   payload: { guest: guestRef, addGuest: addGuest, host_id },
+      // });
+    });
+
     socket?.on("ROOM_READY", (res: { category: string; room_id: string }) => {
       const { category, room_id } = res;
       window.location.assign(`/level/${room_id}/${category}`);
@@ -301,7 +329,7 @@ function Lobby() {
     });
   }, [socket]);
 
-  if (loading) {
+  if (loading || !currentPlayer) {
     return <p>...loading</p>;
   }
 
@@ -329,8 +357,8 @@ function Lobby() {
           )}
 
           <div className="px-4 pt-10">
-            <div className="py-20">
-              <p>Host: {hostname}</p>
+            <div className="pb-4">
+              <p className="text-white">Host: {hostname}</p>
               <CategoryDisplay category={category} />
             </div>
 
@@ -347,6 +375,9 @@ function Lobby() {
             )}
 
             {/*DISPLAY ALL OTHER PLAYERS EXCEPT CURRENT PLAYER  */}
+            {/* 
+            // TODO : DISPLAY ALL OTHER PLAYERS EXCEPT HOST
+            */}
 
             {/* OTHER PLAYERS COMPONENT */}
             <div className="py-4">
