@@ -87,7 +87,7 @@ const Levelreducer = (
       return {
         ...state,
         ended: true,
-        scoreBoard: action.payload.scores,
+        // scoreBoard: action.payload.scores,
         winner: action.payload.winner,
       };
     case "TEST":

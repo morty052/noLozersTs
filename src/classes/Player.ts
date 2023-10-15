@@ -59,6 +59,8 @@ class Player {
 
     this.questions = questions;
 
+    // * FUNCTION TO CALL SEND DEBUFF
+    //  SEND DEBUFF IS DEFINED WITHIN PLAYER OBJECT
     this.callDebuff = (props: {
       target_name: string;
       name: characterName;
@@ -67,6 +69,8 @@ class Player {
       return this.SendDebuff(props);
     };
 
+    // * FUNCTION TO APPLY DEBUFF
+    // * FUNCTION CALLS APPLY DEBUFF FUNCTION DEFINED IN PLAYER OBJECT
     this.Debuff = (props: {
       debuff: Debuffs;
       target_name: string;
@@ -74,6 +78,7 @@ class Player {
     }) => {
       this.ApplyDebuff(props);
     };
+
     this.tryTest = (number: number) => {
       this.Test(number);
     };
@@ -235,6 +240,7 @@ class Player {
     func();
   };
 
+  // * PLAYER CHARACTER DEBUFF EFFECTS TYPES
   ApplyDebuff = (props: {
     debuff: Debuffs;
     target_name: string;
@@ -243,9 +249,10 @@ class Player {
     const { debuff, target_name } = props;
     console.log(props);
 
+    //
     if (target_name == this.username) {
       console.log(`this player ${target_name} got ${debuff}`);
-      // this.lives = 0;
+      this.powerBars = this.powerBars && this.powerBars - 1;
       // console.log(this.lives);
     } else {
       return console.log("not you");
@@ -269,6 +276,7 @@ class Player {
     // }
   };
 
+  // FUNCTION TO SEND DEBUFF
   SendDebuff = (props: {
     target_name: string;
     name: characterName;
@@ -276,6 +284,7 @@ class Player {
     const { target_name, name } = props;
     const sender = this.username;
 
+    // DETERMINE TYPE OF DEBUFF TO SEND USING CHARACTER NAME
     const deterMineDebuff = () => {
       let debuff: Debuffs;
       switch (name) {
@@ -290,8 +299,14 @@ class Player {
       }
     };
 
+    // GET DEBUFF FROM DETERMINED TYPE
     const debuff = deterMineDebuff();
 
+    /*
+     * RETURN DEBUFF
+     * RETURN TARGET NAME
+     * RETURN SENDER
+     */
     return {
       // @ts-ignore
       debuff,

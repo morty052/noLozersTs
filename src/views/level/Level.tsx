@@ -12,10 +12,14 @@ import Levelreducer, { LevelState } from "@/reducers/LevelReducer";
 import { player } from "@/types";
 import { character } from "../gamemenu/components/CharacterSelect";
 import { useUser } from "@clerk/clerk-react";
+import { TstatusTypes } from "./components/ChoiceList";
 
 const Level = () => {
   const [GameState, GameDispatch] = useReducer(Levelreducer, LevelState);
   const [confused, setconfused] = useState(false);
+  const [statusEffects, setStatusEffects] = useState<
+    undefined | TstatusTypes
+  >();
 
   const { socket } = useSocketcontext();
 
@@ -26,6 +30,7 @@ const Level = () => {
   const { user, isLoaded } = useUser();
 
   const username = user?.username;
+  console.log(username);
 
   const {
     ended,
@@ -39,16 +44,17 @@ const Level = () => {
   } = GameState;
 
   // !ORIGINAL FUNCTION
-  // const { question, correct_answer, incorrect_answers } =
-  //   questions.length > 1 ? questions[level] : [];
+  const { question, correct_answer, incorrect_answers } =
+    questions.length > 1 ? questions[level] : [];
 
   // ?TESTING NEW OBJECT DESTRUCTURING
-  const { question, correct_answer, incorrect_answers } =
-    questions.length > 1 ? CurrentPlayer.questions[level] : [];
+  // const { question, correct_answer, incorrect_answers } =
+  //   questions.length > 1 ? CurrentPlayer.questions[level] : [];
 
-  // destructure and rename username and points variable from winner object from state.
-  const { points: winningPoints, controller: winningController } = winner;
-  const { username: winnerName } = winningController ? winningController : [];
+  //* destructure and rename username and points variable from winner object from state.
+
+  const { points: winningPoints, username: winnerName } = winner;
+  // const { username: winnerName } = winningController ? winningController : [];
 
   const { lives } = CurrentPlayer as player;
 
@@ -138,6 +144,10 @@ const Level = () => {
   useEffect(() => {
     // fetchQuestions()
 
+    if (!username) {
+      return;
+    }
+
     socket?.emit(
       "SET_ROOM",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,7 +176,7 @@ const Level = () => {
       console.log(questions);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [username]);
 
   // * HANDLE PAGE REFRESH
   useEffect(() => {
@@ -187,6 +197,7 @@ const Level = () => {
     };
   }, []);
 
+  // * HANDLE QUESTIONS END
   useEffect(() => {
     if (level == 19) {
       socket?.emit("TALLY_GAME", { room_id }, (res) => {
@@ -210,17 +221,38 @@ const Level = () => {
     }
   }, [level]);
 
+  // * HANDLE LAST PLAYER STANDING
   useEffect(() => {
     console.log(allPlayers.length);
     if (allPlayers.length == 1) {
+      // !ORIGINAL FUNCTION
+      // socket?.emit("TALLY_GAME", { room_id }, (res) => {
+      //   console.log(res);
+
+      //   const points = Array.from(res, (p) => p.points);
+      //   console.log(points);
+      //   const highest = max(points);
+      //   console.log(highest);
+      //   const winner = res.find((p) => p.points == highest);
+      //   console.log(winner);
+
+      //   GameDispatch({
+      //     type: "END_GAME",
+      //     payload: {
+      //       scores: res,
+      //       winner,
+      //     },
+      //   });
+      // });
+
       socket?.emit("TALLY_GAME", { room_id }, (res) => {
         console.log(res);
 
-        const points = Array.from(res, (p) => p.points);
+        const points = Array.from(scoreBoard, (p: player) => p.points);
         console.log(points);
         const highest = max(points);
         console.log(highest);
-        const winner = res.find((p) => p.points == highest);
+        const winner = scoreBoard.find((p: player) => p.points == highest);
         console.log(winner);
 
         GameDispatch({
@@ -234,7 +266,7 @@ const Level = () => {
     }
   }, [socket, allPlayers]);
 
-  if (questions.length < 1 || !CurrentPlayer) {
+  if (questions.length < 1 || !CurrentPlayer || !isLoaded) {
     return <h3>....loading</h3>;
   }
 
@@ -315,6 +347,8 @@ const Level = () => {
                 handleAnswer={handleAnswer}
                 confused={confused}
                 setconfused={setconfused}
+                setStatusEffects={setStatusEffects}
+                statusEffects={statusEffects}
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
                 PowerParams={PowerParams}
@@ -339,8 +373,8 @@ const Level = () => {
           </div>
 
           {scoreBoard?.map((player, index: number) => {
-            const { points, controller } = player;
-            const { username } = controller;
+            console.log(player);
+            const { points, username } = player;
 
             return (
               <div key={index}>

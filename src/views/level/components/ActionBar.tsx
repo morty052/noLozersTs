@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { player } from "@/types/player";
@@ -15,6 +16,7 @@ import { useSocketcontext } from "@/hooks/useSocketContext";
 import { character } from "@/views/gamemenu/components/CharacterSelect";
 import { Debuffs } from "@/classes/Player";
 import { message } from "antd";
+import { TstatusTypes } from "./ChoiceList";
 
 interface TactionBarProps {
   CurrentPlayer: player;
@@ -24,6 +26,8 @@ interface TactionBarProps {
   level: number;
   confused: boolean;
   setconfused: (c: boolean) => void;
+  statusEffects: TstatusTypes | undefined;
+  setStatusEffects: (e: TstatusTypes) => void | undefined;
   PowerParams: {
     answer: string;
     nextQuestion: string;
@@ -40,6 +44,7 @@ interface IStateProps {
   PowerBars: number;
   UltimateBars: number;
   CurrentPlayer?: any;
+  statusEffects: "";
 }
 
 interface IActionTypes {
@@ -69,6 +74,7 @@ const state: IStateProps = {
   PowerBars: 0,
   UltimateBars: 0,
   CurrentPlayer: "",
+  statusEffects: "",
 };
 
 function actionBarReducer(state: IStateProps, action: IActionTypes) {
@@ -114,6 +120,7 @@ function actionBarReducer(state: IStateProps, action: IActionTypes) {
     }
   }
 
+  //* SET UI DISPLAY VALUES FROM CURRENT PLAYER
   function handleInit(player: player) {
     console.log(player);
     const { lives, powerBars, ultimateBars } = player;
@@ -136,6 +143,8 @@ function actionBarReducer(state: IStateProps, action: IActionTypes) {
       return handleUltimate();
     case "USE_POWER":
       return { ...state };
+
+    // * DISPLAY DEBUFF AND SENDER
     case "DEBUFF":
       console.log(action.payload);
       // @ts-ignore
@@ -155,6 +164,8 @@ const ActionBar = ({
   level,
   confused,
   setconfused,
+  setStatusEffects,
+  statusEffects,
 }: TactionBarProps) => {
   // destructure display numbers and user powers from player class passed as props
   const {
@@ -177,10 +188,13 @@ const ActionBar = ({
     });
   }
 
+  //* FUNCTION TO DETERMINE SENDER DEBUFF TYPES AND TARGET
   function callDebuff(target: string | undefined) {
     const { character } = CurrentPlayer;
     const { name } = character;
     // @ts-ignore
+
+    // * GET DEBUFF, TARGET NAME AND SENDER FROM SEND DEBUFF FUNCTION DEFINED IN PLAYER OBJECT
     const { debuff, target_name, sender } = CurrentPlayer.callDebuff({
       target_name: `${target}`,
       name: name,
@@ -266,7 +280,7 @@ const ActionBar = ({
               // * OTHER PLAYER
               return (
                 <div
-                  onClick={() => sendRequest(player.username)}
+                  onClick={() => callDebuff(player.controller?.username)}
                   key={index}
                   className="flex gap-x-2 pt-2"
                 >
@@ -316,7 +330,7 @@ const ActionBar = ({
           <div className="flex items-center justify-around rounded-3xl border px-4 py-2.5">
             <div className="flex items-center gap-x-2">
               <FaHeart />
-              <p>{Lives}</p>
+              <p>{lives}</p>
             </div>
 
             {/* // eslint-disable-next-line react-hooks/rules-of-hooks */}
@@ -329,7 +343,7 @@ const ActionBar = ({
             </div>
 
             <div
-              // onClick={() => ultimate(Superparams)}
+              // onClick={() => callUltimate()}
               className="flex items-center gap-x-2"
             >
               <FaStar />
@@ -349,6 +363,7 @@ const ActionBar = ({
     );
   };
 
+  // *SET UI DISPLAY VALUES FROM CURRENT PLAYER
   useEffect(() => {
     ActionDispatch({
       type: "INIT",
@@ -366,35 +381,10 @@ const ActionBar = ({
     });
   }, [socket]);
 
-  useEffect(() => {
-    socket?.on(
-      "DEBUFF_USED",
-      (res: {
-        debuff: Debuffs;
-        target_name: string;
-        room_id: string;
-        sender: string;
-      }) => {
-        const { debuff, target_name, sender } = res;
-        console.log(debuff);
-        console.log(username);
-
-        if (username == target_name) {
-          console.log("This you buddy", target_name);
-          // @ts-ignore
-          ActionDispatch({
-            type: "DEBUFF",
-            payload: {
-              debuff,
-              sender,
-            },
-          });
-
-          setconfused(true);
-        }
-      }
-    );
-  }, [socket]);
+  // *LISTEN TO DEBUFF EVENTS AND POWERS
+  // TODO MOVE INTO CHOICELIST COMPONENT
+  // TODO ADD MORE DEBUFFS HERE
+  // !DEBUFF LISTENER WAS HERE
 
   return (
     <div className="">
@@ -404,3 +394,38 @@ const ActionBar = ({
 };
 
 export default ActionBar;
+
+// !BACKUP FUNCTION
+// useEffect(() => {
+//   socket?.on(
+//     "DEBUFF_USED",
+//     (res: {
+//       debuff: Debuffs;
+//       target_name: string;
+//       room_id: string;
+//       sender: string;
+//     }) => {
+//       GET TARGET NAME , TYPE OF DEBUFF AND SENDER FROM RESPONSE
+//       const { debuff, target_name, sender } = res;
+//       console.log(debuff);
+//       console.log(username);
+
+//       APPLY DEBUFF IF TARGERT USERNAME EQUALS TARGET
+//       if (username == target_name) {
+//         console.log("This you buddy", target_name);
+//         @ts-ignore
+//         ActionDispatch({
+//           type: "DEBUFF",
+//           payload: {
+//             debuff,
+//             sender,
+//           },
+//         });
+
+//         APPLY DEBUFF
+//         setconfused(true);
+//         setStatusEffects("brainstorming");
+//       }
+//     }
+//   );
+// }, [socket]);

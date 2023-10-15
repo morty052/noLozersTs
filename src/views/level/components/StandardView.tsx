@@ -1,6 +1,7 @@
 import { player } from "@/types";
 import { ActionBar, ChoiceList, Screen } from ".";
 import { Socket } from "socket.io-client";
+import { TstatusTypes } from "./ChoiceList";
 
 type IViewProps = {
   CurrentPlayer: player;
@@ -22,6 +23,8 @@ type IViewProps = {
     roomID: string;
     func: (lives: number, powerBars: number) => void;
   };
+  statusEffects: TstatusTypes | undefined;
+  setStatusEffects: (e: TstatusTypes) => void | undefined;
 };
 
 const StandardView = ({
@@ -37,6 +40,8 @@ const StandardView = ({
   level,
   confused,
   setconfused,
+  setStatusEffects,
+  statusEffects,
 }: IViewProps) => {
   // TODO: REMOVE USELESS PARAMETERS
   return (
@@ -44,6 +49,8 @@ const StandardView = ({
       <div className="relative mx-auto h-screen max-w-2xl  bg-gray-300 sm:min-h-[700px]">
         <Screen question={question} CurrentPlayer={CurrentPlayer} />
         <ChoiceList
+          setStatusEffects={setStatusEffects}
+          statusEffects={statusEffects}
           confused={confused}
           setconfused={setconfused}
           correct_answer={correct_answer}
@@ -51,6 +58,8 @@ const StandardView = ({
           choices={choices}
         />
         <ActionBar
+          setStatusEffects={setStatusEffects}
+          statusEffects={statusEffects}
           confused={confused}
           setconfused={setconfused}
           level={level}

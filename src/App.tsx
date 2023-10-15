@@ -14,6 +14,7 @@ import {
   Login,
   SplashScreen,
   OnlineFriends,
+  Room,
 } from "./views";
 import "./globals.css";
 import { Layout } from "./components";
@@ -42,7 +43,7 @@ const Router = createBrowserRouter(
         <Route path="/character" element={<CharacterSelect />} />
         <Route path="/friends" element={<OnlineFriends />} />
         <Route path="/category" element={<TopicScreen />} />
-        <Route path="/lobby/:room_id/*" element={<Test />} />
+        <Route path="/lobby/:room_id/*" element={<Room />} />
         {/* <Route path="/lobby/:room_id/:category/" element={<Lobby />} /> */}
         <Route path="/room/:room_id/*" element={<CreateRoom />} />
         <Route path="/level/:room_id/:category" element={<Level />} />

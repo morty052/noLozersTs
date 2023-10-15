@@ -285,6 +285,17 @@ function AllEvents(socket) {
 export function LobbyEvents(socket, userNamespace) {
   // TODO:ADD TRY CATCH TO ALL DANGEROUS EVENTS
 
+  function generateQuestionsIndex() {
+    const randomNumber = Math.floor(Math.random() * 30); // Generate a random number between 0 and 30
+    const number1 = randomNumber;
+    const number2 = randomNumber + 20;
+
+    return {
+      start: number1,
+      end: number2,
+    };
+  }
+
   socket.on("PING_LOBBY", async (data, cb) => {
     // * DESTRUCTURE CREATED ROOM_ID FROM EVENT DATA
     // ! ROOM_ID IS SAME AS ID OF HOST
@@ -481,6 +492,7 @@ export function LobbyEvents(socket, userNamespace) {
   socket.on("CREATE_ROOM", async (data, cb) => {
     // * DESCTRUCTURE HOST USERNAME AND CATEGORY FROM DATA
     const { username, category } = data;
+    const { start, end } = generateQuestionsIndex();
 
     try {
       if (!username || !category) {
@@ -504,6 +516,10 @@ export function LobbyEvents(socket, userNamespace) {
         _type: "rooms",
         room_id: userRef,
         category: category,
+        range: {
+          start: start,
+          end: end,
+        },
       };
 
       // *CREATE ROOM / RERTEIVE CREATED ROOM ID
@@ -712,6 +728,10 @@ export function MatchEvents(socket, userNamespace) {
   const increaseUserPoints = async (room_id, username, incorrect) => {
     const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{_id,players[]{...,controller ->  {...}}}`;
 
+    if (incorrect) {
+      console.log(incorrect);
+    }
+
     try {
       const room = await client
         .fetch(roomQuery)
@@ -725,53 +745,65 @@ export function MatchEvents(socket, userNamespace) {
       }
       const { players, _id: roomID } = room;
 
-      // !ONLY ADD POINTS TO ROOM IF NOT INCORRECT
-      if (incorrect) {
+      // !DONT ADD POINTS TO ROOM IF INCORRECT
+      if (!incorrect) {
+        const scores = players.map((player) => {
+          return {
+            points: player.points,
+            username: player.controller.username,
+          };
+        });
         return new Promise((resolve) => {
-          resolve(players);
+          resolve(scores);
         });
       }
 
-      // * ADD POINTS TO USER
-      // ! LIST OF PLAYERS TO SEND BACK
-      const returnList = players.map((player) => {
-        if (player.controller.username == username) {
-          return {
-            ...player,
-            points: player.points + 10,
-          };
-        }
+      // !ONLY ADD POINTS TO ROOM IF NOT INCORRECT
+      if (incorrect) {
+        // * ADD POINTS TO USER
+        // ! LIST OF PLAYERS TO SEND BACK
+        const returnList = players.map((player) => {
+          if (player.controller.username == username) {
+            return {
+              username: player.controller.username,
+              points: player.points + 10,
+            };
+          }
 
-        return player;
-      });
+          return player;
+        });
 
-      // ! LIST TO ADD POINTS TO ROOM IN SERVER
-      const updatedList = players.map((player) => {
-        if (player.controller.username == username) {
+        // ! LIST TO ADD POINTS TO ROOM IN SERVER
+        const updatedList = players.map((player) => {
+          if (player.controller.username == username) {
+            return {
+              controller: {
+                _type: "reference",
+                _ref: `${player.controller._id}`,
+              },
+              points: player.points + 10,
+            };
+          }
+
           return {
             controller: {
               _type: "reference",
               _ref: `${player.controller._id}`,
             },
-            points: player.points + 10,
+            points: player.points,
           };
-        }
+        });
 
-        return {
-          controller: { _type: "reference", _ref: `${player.controller._id}` },
-          points: player.points,
-        };
-      });
+        await client
+          .patch(`${roomID}`)
+          .setIfMissing({ players: [] })
+          .set({ players: updatedList })
+          .commit({ autoGenerateArrayKeys: true });
 
-      await client
-        .patch(`${roomID}`)
-        .setIfMissing({ players: [] })
-        .set({ players: updatedList })
-        .commit({ autoGenerateArrayKeys: true });
-
-      return new Promise((resolve) => {
-        resolve(returnList);
-      });
+        return new Promise((resolve) => {
+          resolve(returnList);
+        });
+      }
     } catch (error) {
       console.log(error);
     }
@@ -800,7 +832,26 @@ export function MatchEvents(socket, userNamespace) {
       }
 
       console.log(categoryName);
-      const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{players[]{...,controller -> {..., character -> {...}}}}`;
+      const roomQuery = `*[_type == "rooms" && room_id == "${room_id}"]{range, players[]{...,controller -> {..., character -> {...}}}}`;
+
+      // TODO:RANDOMIZE QUESTION QUERY
+      // ?HINT ADD QUESTIONS OBJECT TO ROOM AND THEN PATCH ROOM WITH THOSE QUESTIONS ON INITIAL LOAD.
+      // ? OPTION 2 ADD RANGE OBJECT TO ROOM WITH START AND STOP AND THEN WHEN CREATING ROOM DO THE GENRATION FUNCTION THERE AND SET A FIXED START AND END POINT TO THE ROOM GEENRATED ON INITIAL ROOM CREATION
+      // ?THEN INCLUDE THIS RANGE OBJECT IN THE ROOM QUERY AND FILTER THE QUESTION QUERY USING THE ROOM START AND END VARIABLE FROM RANGE OBJECT
+
+      // const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
+      const room = await client.fetch(roomQuery).then((res) => res[0]);
+
+      if (!room) {
+        throw console.log("Room not found, check room_id and try again");
+      }
+
+      const { players, range } = room;
+      const { start, end } = range;
+
+      console.table([start, end]);
+
+      // const questionQuery = `*[_type == "questions" && category match "${categoryName}"]`;
       const questionQuery = `*[_type == "questions" && category match "${categoryName}"][${start}...${end}]`;
 
       const questions = await client.fetch(questionQuery);
@@ -810,14 +861,6 @@ export function MatchEvents(socket, userNamespace) {
           "No questions found please check category and try again"
         );
       }
-
-      const room = await client.fetch(roomQuery).then((res) => res[0]);
-
-      if (!room) {
-        throw console.log("Room not found, check room_id and try again");
-      }
-
-      const { players } = room;
 
       if (!username) {
         throw console.log("username not found, check username and try again");
@@ -877,6 +920,7 @@ export function MatchEvents(socket, userNamespace) {
     // io.in(roomID).emit("ping_room", room.players)
   });
 
+  // *HANDLE ANSWER SEND BACK SCORES
   socket.on("SELECTED_OPTION", async (data) => {
     const { room_id, username, correct } = data;
 

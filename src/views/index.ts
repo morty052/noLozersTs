@@ -5,6 +5,8 @@ import { default as Login } from "./login/Login";
 import { default as Lobby } from "./lobby/Lobby";
 import { default as SplashScreen } from "./splashscreen/SplashScreen";
 import { default as OnlineFriends } from "./onlinefriends/OnlineFriends";
+// import Room
+import { default as Room } from "./room/Room";
 import Level from "./level/Level";
 import SinglePlayerLevel from "./SinglePlayerLevel";
 
@@ -18,4 +20,5 @@ export {
   Login,
   SplashScreen,
   OnlineFriends,
+  Room,
 };
